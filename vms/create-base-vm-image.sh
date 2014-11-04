@@ -12,4 +12,4 @@ virt-install --virt-type kvm --name debian-7 --ram 1024				\
 	--initrd-inject=preseed.cfg							\
 	--os-variant=debianwheezy --extra-args="priority=critical interface=auto	\
 		debian-installer/language=en debian-installer/country=GB		\
-		debian-installer/locale=en_GB keymap=gb"
+		debian-installer/locale=en_GB keymap=gb console=ttyS0,115200n8"
