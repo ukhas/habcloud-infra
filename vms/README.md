@@ -16,4 +16,10 @@ $ virsh console debian-7
 
 ## Required packages
 
-* ``virtinst`` - for ``virt-install``
+* ``virtinst`` for ``virt-install``
+* ``qemu-system`` for libvirt to work at all
+* ``virt-manager`` for GUI configuration of domains
+
+## Optional packages
+
+* ``libguestfs-tools`` for the useful ``guestfish`` tool
