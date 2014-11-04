@@ -1,0 +1,6 @@
+<pool type="logical">
+    <name>ceto</name>
+    <target>
+        <path>/dev/ceto</path>
+    </target>
+</pool>

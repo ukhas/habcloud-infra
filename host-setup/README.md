@@ -31,3 +31,4 @@ Post install tasks
   - install /etc/network/interfaces (set static config!)
     you may need to use `apt-get install ethtool` to inspect ports
   - sudo virsh net-create libvirt-br0.xml
+  - sudo virsh pool-create libvirt-lvm-pool-`hostname`.xml
