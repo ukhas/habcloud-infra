@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Create base Debian install at /tmp/debian-7-amd64-vm.img. This script must be
+# run from the directory which contains it. (Sorry.)
 
 set -xe
 
