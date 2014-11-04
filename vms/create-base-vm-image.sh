@@ -32,6 +32,7 @@ fi
 # Now command line is parsed, switch on logging and fail on error
 set -xe
 
+# Create the VM image
 virt-install --virt-type kvm --name "${vm_name}" --ram 1024				\
 	--location=http://ftp.debian.org/debian/dists/wheezy/main/installer-amd64/	\
 	--disk "path=${img_path},size=5" --network network=default			\
@@ -39,3 +40,6 @@ virt-install --virt-type kvm --name "${vm_name}" --ram 1024				\
 	--os-variant=debianwheezy --extra-args="priority=critical interface=auto	\
 		debian-installer/language=en debian-installer/country=GB		\
 		debian-installer/locale=en_GB keymap=gb console=ttyS0,115200n8"
+
+# Destroy the VM now we've created the image
+virsh destroy "${vm_name}"
