@@ -32,3 +32,12 @@ Post install tasks
     you may need to use `apt-get install ethtool` to inspect ports
   - sudo virsh net-create libvirt-br0.xml
   - sudo virsh pool-create libvirt-lvm-pool-`hostname`.xml
+
+Virsh notes:
+
+To copy img into storage volume:
+
+  - export POOL=`hostname` # The pools are named after the lvm vgroups
+  - virsh vol-create-as $POOL new-name 5G
+  - virsh vol-upload --pool $POOL new-name /path/to.img
+
