@@ -4,27 +4,27 @@
 # run from the directory which contains it. (Sorry.)
 #
 # Usage:
-#     create-base-vm-image.sh [<name> [<imgpath>]]
+#     create-base-vm-image.sh [<imgpath> [<name>]]
 #
-# <name> is the name of the guest in libvirt. If omitted, "debian-7" is used.
+# <name> is the name of the guest in libvirt. If omitted, "debian" is used.
 # <imgpath> is the path to the created image. If omitted,
-# "/tmp/<name>-amd64-vm.img" is used.
+# "/tmp/debian-amd64-vm.img" is used.
 
 # Parse command line
-vm_name=debian-7
-if [ $# -gt 0 ]; then
-	vm_name=$1; shift
-fi
-
-img_path=/tmp/${vm_name}-amd64-vm.img
+img_path=/tmp/debian-amd64-vm.img
 if [ $# -gt 0 ]; then
 	img_path=$1; shift
+fi
+
+vm_name=debian
+if [ $# -gt 0 ]; then
+	vm_name=$1; shift
 fi
 
 if [ $# -gt 0 ]; then
 	cat >&2 <<EOL
 Usage:
-    create-base-vm-image.sh [<name> [<imgpath>]]
+     create-base-vm-image.sh [<imgpath> [<name>]]
 EOL
 	exit 1
 fi
