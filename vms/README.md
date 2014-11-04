@@ -13,3 +13,7 @@ monitor progress using ``virsh``:
 ```console
 $ virsh console debian-7
 ```
+
+## Required packages
+
+* ``virtinst`` - for ``virt-install``
