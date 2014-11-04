@@ -34,7 +34,7 @@ set -xe
 
 virt-install --virt-type kvm --name "${vm_name}" --ram 1024				\
 	--location=http://ftp.debian.org/debian/dists/wheezy/main/installer-amd64/	\
-	--disk "path=${img_path},size=5" --network network=default		\
+	--disk "path=${img_path},size=5" --network network=default			\
 	--noautoconsole --os-type=linux --initrd-inject=preseed.cfg			\
 	--os-variant=debianwheezy --extra-args="priority=critical interface=auto	\
 		debian-installer/language=en debian-installer/country=GB		\
