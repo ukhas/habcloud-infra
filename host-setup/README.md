@@ -29,7 +29,9 @@ Post install tasks
   - sudo update-rc.d procps defaults
   - install /etc/network/interfaces (set static config!)
     you may need to use `apt-get install ethtool` to inspect ports
+  - sudo virsh net-undefine default
   - sudo virsh net-create libvirt-br0.xml
+  - sudo virsh net-create libvirt-br1.xml
   - sudo virsh pool-create libvirt-lvm-pool-`hostname`.xml
 
 Virsh notes:
