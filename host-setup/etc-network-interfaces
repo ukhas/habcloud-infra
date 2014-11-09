@@ -8,11 +8,11 @@ iface br0 inet static
     bridge_ports eth0
     bridge_maxwait 0
     bridge_fd 0
-    address 82.219.14.248
-    netmask 255.255.255.240
-    network 82.219.14.240
-    broadcast 82.219.14.255
-    gateway 82.219.14.254
+    gateway 164.39.7.97
+    netmask 255.255.255.224
+    address 164.39.7.114
+    broadcast 164.39.7.127
+    network 164.39.7.96
     dns-nameservers 8.8.8.8 8.8.4.4
     dns-search habhub.org
 
@@ -31,3 +31,5 @@ iface br1 inet static
     netmask 255.0.0.0
     network 10.0.0.0
     broadcast 10.255.255.255
+    up sysctl net.ipv4.ip_forward=1
+    down sysctl net.ipv4.ip_forward=0
