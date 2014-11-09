@@ -33,6 +33,8 @@ Post install tasks
   - sudo virsh net-create libvirt-br0.xml
   - sudo virsh net-create libvirt-br1.xml
   - sudo virsh pool-create libvirt-lvm-pool-`hostname`.xml
+  - install /etc/iptables.rules
+  - install /etc/network/if-pre-up.d/iptables
 
 Virsh notes:
 
