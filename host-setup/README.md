@@ -27,7 +27,6 @@ Post install tasks
   - apt-get purge dnsmasq-base
   - apt-get install virtinst --no-install-recommends
   - sudo update-rc.d procps defaults
-  - install /etc/sysctl.d/bridge-notables.conf
   - install /etc/network/interfaces (set static config!)
     you may need to use `apt-get install ethtool` to inspect ports
   - sudo virsh net-create libvirt-br0.xml
