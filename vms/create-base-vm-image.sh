@@ -34,7 +34,7 @@ sudo lvcreate $HOSTNAME --name ${vm_name} --size 2G
 # Create the VM image
 virt-install --virt-type kvm --name "${vm_name}" --ram 1024 --wait 20 --noreboot    \
     --location=http://ftp.debian.org/debian/dists/wheezy/main/installer-amd64/      \
-    --disk "$HOSTNAME:${vm_name}" --network network=br1                             \
+    --disk "/dev/$HOSTNAME/${vm_name}" --network network=br1                        \
     --graphics none --os-type=linux --initrd-inject=preseed.cfg                     \
     --os-variant=debianwheezy --extra-args="priority=critical interface=auto
         debian-installer/language=en debian-installer/country=GB
