@@ -21,20 +21,20 @@ Debian installer
 Post install tasks
   - configure passwordless sudo
   - add yourself to group libvirt
-  - put `export LIBVIRT_DEFAULT_URI="qemu:///system"` in your bashrc
-  - apt-get install rsync vim git iperf
-  - apt-get install qemu-kvm libvirt-bin qemu-system bridge-utils
-  - apt-get purge dnsmasq-base
-  - apt-get install virtinst --no-install-recommends
-  - sudo update-rc.d procps defaults
-  - install /etc/network/interfaces (set static config!)
-    you may need to use `apt-get install ethtool` to inspect ports
-  - sudo virsh net-undefine default
-  - sudo virsh net-create libvirt-br0.xml
-  - sudo virsh net-create libvirt-br1.xml
-  - sudo virsh pool-create libvirt-lvm-pool-`hostname`.xml
-  - install /etc/iptables.rules
-  - install /etc/network/if-pre-up.d/iptables
+  - install `/etc/profile.d/libvirt-default-uri.sh`
+  - `apt-get install rsync vim git iperf`
+  - `apt-get install qemu-kvm libvirt-bin qemu-system bridge-utils`
+  - `apt-get purge dnsmasq-base`
+  - `apt-get install virtinst --no-install-recommends`
+  - install `/etc/network/interfaces` (set the correct IP!)
+    you may need to use `mii-tool` to inspect ports
+  - install `/etc/iptables.rules`
+  - install `/etc/network/if-pre-up.d/iptables`
+  - `sudo virsh net-undefine default`
+  - reboot and check all networking comes up.
+  - `sudo virsh net-create libvirt-br0.xml`
+  - `sudo virsh net-create libvirt-br1.xml`
+  - `sudo virsh pool-create libvirt-lvm-pool-$HOSTNAME.xml`
 
 Virsh notes:
 
