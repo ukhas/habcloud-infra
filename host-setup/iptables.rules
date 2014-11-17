@@ -31,7 +31,7 @@ COMMIT
 ## Note that connections initiated by a host to a VM on the same box
 ## are exempt (pass through OUTPUT chain, not FORWARD).
 
--A FORWARD -m physdev --physdev-in eth0 --physdev-out eth0 -j DROP
+-A FORWARD -m physdev --physdev-is-bridged --physdev-in eth0 --physdev-out eth0 -j DROP
 
 ## Always allow Ping, SSH, established connections
 -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
@@ -43,7 +43,7 @@ COMMIT
 
 ## Let VM public and VM private initiate connections to hosts on the internet
 ### (Note that both rules are necessary for VM private)
--A FORWARD -m physdev --physdev-out eth0 -m state --state NEW -j ACCEPT
+-A FORWARD -m physdev --physdev-is-bridged --physdev-out eth0 -m state --state NEW -j ACCEPT
 -A FORWARD -i br1 -o br0 -m state --state NEW -j ACCEPT
 
 ## Allow HTTP to public VMs (from the world, other public VMs & other private VMs)
