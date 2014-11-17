@@ -21,12 +21,12 @@ Debian installer
 
 Post install tasks
   - configure passwordless sudo
-  - add yourself to group libvirt
-  - install `/etc/profile.d/libvirt-default-uri.sh`
   - `apt-get install rsync vim git iperf`
   - `apt-get install qemu-kvm libvirt-bin qemu-system bridge-utils`
   - `apt-get purge dnsmasq-base`
   - `apt-get install virtinst --no-install-recommends`
+  - add yourself to group libvirt
+  - install `/etc/profile.d/libvirt-default-uri.sh`
   - install `/etc/network/interfaces` (set the correct IP!)
     you may need to use `mii-tool` to inspect ports
   - install `/etc/iptables.rules`
