@@ -5,12 +5,13 @@ Debian installer booted
   - with command line `append install vga=normal initrd=initrd.gz fb=false console=tty0 console=ttyS1,9600n8`
 
 iLO commands:
-  - ilo-> vm cdrom insert http://www.danielrichman.co.uk/files/bnx2-deb7.iso 77d8ad8c5bbf09a71c1d855b57460953ee5186b7d027403d3ea8735ac2bb3f2e
-  - ilo-> vm cdrom set boot_once
-  - ilo-> power on
+  - `ilo-> vm cdrom insert http://www.danielrichman.co.uk/files/bnx2-deb7.iso`
+    (sha256sum 77d8ad8c5bbf09a71c1d855b57460953ee5186b7d027403d3ea8735ac2bb3f2e)
+  - `ilo-> vm cdrom set boot_once`
+  - `ilo-> power on`
 
 Disk config: Raid 10, stripe across 3 mirror pairs + 2 hot spares (set before boot)
-TODO: check config (IIRC problems), set up hpaucli, set up monitoring
+TODO: check config (IIRC problems), set up `hpaucli`, set up monitoring
 
 Debian installer
   - Static configure networking.
@@ -40,7 +41,6 @@ Virsh notes:
 
 To copy img into storage volume:
 
-  - export POOL=`hostname` # The pools are named after the lvm vgroups
-  - virsh vol-create-as $POOL new-name 5G
-  - virsh vol-upload --pool $POOL new-name /path/to.img
+  - `virsh vol-create-as $HOSTNAME new-name 5G` (the pools are named after the lvm vgroups)
+  - `virsh vol-upload --pool $HOSTNAME new-name /path/to.img`
 
