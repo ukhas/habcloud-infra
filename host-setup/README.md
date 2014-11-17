@@ -22,7 +22,7 @@ Debian installer
 Post install tasks
   - configure passwordless sudo
   - `apt-get install rsync vim git iperf`
-  - `apt-get install qemu-kvm libvirt-bin qemu-system bridge-utils`
+  - `apt-get install qemu-kvm libvirt-bin qemu-system bridge-utils ifenslave`
   - `apt-get purge dnsmasq-base`
   - `apt-get install virtinst --no-install-recommends`
   - add yourself to group libvirt
