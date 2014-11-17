@@ -43,3 +43,6 @@ virt-install --virt-type kvm --name "${vm_name}" --ram 1024 --wait 20 --noreboot
 # Destroy and undefine the VM now we've started creating the image
 virsh destroy "${vm_name}" || echo "${vm_name} not destroyed"
 virsh undefine "${vm_name}" || echo "${vm_name} not undefined"
+
+# Set the LV read only
+sudo lvchange --permission r $HOSTNAME/${vm_name}
