@@ -31,6 +31,7 @@ Post install tasks
     you may need to use `mii-tool` to inspect ports
   - install `/etc/iptables.rules`
   - install `/etc/network/if-pre-up.d/iptables`
+  - install `/etc/network/if-pre-up.d/ebtables`
   - `sudo virsh net-undefine default`
   - reboot and check all networking comes up.
   - `sudo virsh net-create libvirt-br0.xml`

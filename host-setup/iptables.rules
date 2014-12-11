@@ -18,6 +18,10 @@ COMMIT
 -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 -A INPUT -p icmp --icmp-type 8 -j ACCEPT 
 -A INPUT -p tcp --dport 22 -m state --state NEW -j ACCEPT
+
+## This box can function as a DHCP server. Note that EBTables keeps this away from eth0
+-A INPUT -m udp -p udp --dport 67 -j ACCEPT
+
 -A INPUT -j REJECT --reject-with icmp-port-unreachable
 
 # internal & external bridge:
@@ -31,6 +35,7 @@ COMMIT
 ## Note that connections initiated by a host to a VM on the same box
 ## are exempt (pass through OUTPUT chain, not FORWARD).
 
+## Do no forwarding for random other hosts
 -A FORWARD -m physdev --physdev-is-bridged --physdev-in eth0 --physdev-out eth0 -j DROP
 
 ## Always allow Ping, SSH, established connections
