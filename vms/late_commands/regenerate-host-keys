@@ -1,0 +1,30 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:         sshd-host-keys
+# Required-Start:   $remote_fs $syslog
+# Required-Stop:    $remote_fs $syslog
+# X-Start-Before:   sshd
+# Default-Start:    2 3 4 5
+# Default-Stop:     
+### END INIT INFO
+
+set -e
+
+. /lib/lsb/init-functions
+
+case "$1" in
+  start)
+    dpkg-reconfigure openssh-server
+    for i in /etc/ssh/ssh_host_*.pub; do
+        ssh-keygen -l -f $i
+    done
+    ;;
+  stop)
+    ;;
+
+  *)
+    log_action_msg "Usage: $0 {start|stop}" || true
+    exit 1
+esac
+
+exit 0

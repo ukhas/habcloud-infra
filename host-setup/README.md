@@ -22,26 +22,44 @@ Debian installer
 Post install tasks
   - configure passwordless sudo
   - `apt-get install rsync vim git iperf`
-  - `apt-get install qemu-kvm libvirt-bin qemu-system bridge-utils ifenslave`
-  - `apt-get purge dnsmasq-base`
+  - `apt-get install qemu-kvm libvirt-bin qemu-system bridge-utils ifenslave dnsmasq`
   - `apt-get install virtinst --no-install-recommends`
   - add yourself to group libvirt
-  - install `/etc/profile.d/libvirt-default-uri.sh`
-  - install `/etc/network/interfaces` (set the correct IP!)
+  - install all files in `etc`
+  - reconfigure `/etc/network/interfaces` and `/etc/dnsmasq.conf` with the correct IPs and IP ranges
     you may need to use `mii-tool` to inspect ports
-  - install `/etc/iptables.rules`
-  - install `/etc/network/if-pre-up.d/iptables`
-  - install `/etc/network/if-pre-up.d/ebtables`
   - `sudo virsh net-undefine default`
   - reboot and check all networking comes up.
-  - `sudo virsh net-create libvirt-br0.xml`
-  - `sudo virsh net-create libvirt-br1.xml`
-  - `sudo virsh pool-create libvirt-lvm-pool-$HOSTNAME.xml`
+  - `sudo virsh net-create libvirt/br0.xml`
+  - `sudo virsh net-create libvirt/br1.xml`
+  - `sudo virsh pool-create libvirt/lvm-pool-$HOSTNAME.xml`
 
-Virsh notes:
+# IP Address allcation
 
-To copy img into storage volume:
+## Public IPv4
 
-  - `virsh vol-create-as $HOSTNAME new-name 5G` (the pools are named after the lvm vgroups)
-  - `virsh vol-upload --pool $HOSTNAME new-name /path/to.img`
+  - ceto: `164.39.7.113`
+  - phorcys: `164.39.7.114`
+  - guests: `164.39.7.115--124`
+  - no specific alocation convention
 
+## Private IPv4
+
+Each VM host has three ranges:
+
+  - private addresses for VMs that also have public addresses
+  - private addresses for VMs that don't have public addresses
+  - temporary private addresses
+
+The first two are statically assigned; the latter is a DHCP range. It's used by the debian installer, random recovery VMs, etc.
+
+These are:
+
+|         | private for dual-address  | private for private-only  | temporary    |
+|---------|---------------------------|---------------------------|--------------|
+| ceto    | 10.0.1.2-254              | 10.0.3.2-254              | 10.0.5.2-254 | 
+| phorcys | 10.0.2.2-254              | 10.0.4.2-254              | 10.0.6.2-254 |
+
+The private-only addresses are assigned sequentially.
+The dual addresses are assigned by taking the last octet of the public address, e.g., you might have a VM on ceto with addresses `164.39.7.116` and `10.0.1.116` and one on phorcys with `164.39.7.115` and `10.0.2.115`.
+Note that this applies to the hosts too, so (for example) the default router for VMs with private addresses only on ceto is `10.0.1.113`.

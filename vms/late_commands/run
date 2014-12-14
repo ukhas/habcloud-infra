@@ -1,0 +1,11 @@
+#!/bin/sh
+chown root:root -R /late_commands
+
+rm /usr/lib/finish-install.d/55netcfg-copy-config
+cp /late_commands/interfaces /target/etc/network/interfaces
+# Workaround a dhclient "feature"
+cp /late_commands/unset-old-hostname /target//etc/dhcp/dhclient-enter-hooks.d/
+
+rm /target/etc/ssh/ssh_host_*
+cp /late_commands/regenerate-host-keys /target/etc/init.d
+in-target update-rc.d regenerate-host-keys defaults

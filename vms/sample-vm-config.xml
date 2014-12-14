@@ -1,5 +1,5 @@
 <domain type='kvm'>
-  <name>vm-example</name>
+  <name>sample</name>
   <memory unit='KiB'>1048576</memory>
   <currentMemory unit='KiB'>1048576</currentMemory>
   <vcpu placement='static'>1</vcpu>
@@ -20,16 +20,23 @@
     <emulator>/usr/bin/kvm</emulator>
     <disk type='block' device='disk'>
       <driver name='qemu' type='raw'/>
-      <source dev='/dev/phorcys/vm-base'/>
+      <source dev='/dev/phorcys/vm-sample'/>
       <target dev='vda' bus='virtio'/>
       <alias name='virtio-disk0'/>
     </disk>
     <interface type='network'>
-      <mac address='52:54:01:63:cb:7f'/>
+      <mac address='52:54:01:00:01:40'/>
       <source network='br1'/>
       <target dev='vnet0'/>
       <model type='virtio'/>
       <alias name='net0'/>
+    </interface>
+    <interface type='network'>
+      <mac address='52:54:01:00:00:40'/>
+      <source network='br0'/>
+      <target dev='vnet1'/>
+      <model type='virtio'/>
+      <alias name='net1'/>
     </interface>
     <serial type='pty'>
       <target port='0'/>
@@ -44,4 +51,3 @@
   </devices>
   <seclabel type='none'/>
 </domain>
-
