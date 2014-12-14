@@ -1,0 +1,5 @@
+{%- for vm in vms|sort(attribute='vm_name') -%}
+{%- for intf in vm.interfaces -%}
+{{ intf.ip }}	{{ vm.vm_name }}
+{% endfor -%}
+{%- endfor -%}

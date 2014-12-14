@@ -22,6 +22,7 @@ Debian installer
 Post install tasks
   - configure passwordless sudo
   - `apt-get install rsync vim git iperf`
+  - `apt-get install python-jinja2 python-yaml`
   - `apt-get install qemu-kvm libvirt-bin qemu-system bridge-utils ifenslave dnsmasq`
   - `apt-get install virtinst --no-install-recommends`
   - add yourself to group libvirt

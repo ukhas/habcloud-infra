@@ -1,0 +1,25 @@
+testb:
+  host: ceto
+  ip: [private, 3]
+  ram: {amt: 2, unit: GiB}
+  vcpus: 1
+testc:
+  host: ceto
+  ip: [private, 4]
+  ram: {amt: 2, unit: GiB}
+  vcpus: 1
+testd:
+  host: ceto
+  ip: [private, 2]
+  ram: {amt: 2, unit: GiB}
+  vcpus: 1
+teste:
+  host: ceto
+  ip: [private, 5]
+  ram: {amt: 5, unit: MiB}
+  vcpus: 1
+testf:
+  host: ceto
+  ip: [public, 115]
+  ram: {amt: 1, unit: GiB}
+  vcpus: 1
