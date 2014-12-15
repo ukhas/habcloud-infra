@@ -7,5 +7,5 @@ cp /late_commands/interfaces /target/etc/network/interfaces
 cp /late_commands/unset-old-hostname /target//etc/dhcp/dhclient-enter-hooks.d/
 
 rm /target/etc/ssh/ssh_host_*
-cp /late_commands/regenerate-host-keys /target/etc/init.d
-in-target update-rc.d regenerate-host-keys defaults
+cp /late_commands/ssh-host-keys /target/etc/init.d
+in-target update-rc.d ssh-host-keys defaults
