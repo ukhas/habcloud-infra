@@ -19,7 +19,7 @@
         <emulator>/usr/bin/kvm</emulator>
         <disk type='block' device='disk'>
             <driver name='qemu' type='raw'/>
-            <source dev='/dev/phorcys/vm-{{ vm_name }}'/>
+            <source dev='/dev/{{ host }}/vm-{{ vm_name }}'/>
             <target dev='vda' bus='virtio'/>
             <alias name='virtio-disk0'/>
         </disk>
