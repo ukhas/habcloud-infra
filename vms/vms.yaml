@@ -1,5 +1,12 @@
 test-salt:
+  disk: {amt: 6, unit: G}
   host: ceto
   ip: [private, 2]
+  ram: {amt: 1, unit: GiB}
+  vcpus: 1
+test-salt2:
+  disk: {amt: 2, unit: G}
+  host: phorcys
+  ip: [private, 3]
   ram: {amt: 1, unit: GiB}
   vcpus: 1

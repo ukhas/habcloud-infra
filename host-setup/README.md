@@ -23,8 +23,9 @@ Post install tasks
   - configure passwordless sudo
   - `apt-get install rsync vim git iperf`
   - `apt-get install python-jinja2 python-yaml`
-  - `apt-get install qemu-kvm libvirt-bin qemu-system bridge-utils ifenslave dnsmasq`
-  - `apt-get install virtinst --no-install-recommends`
+  - `apt-get install qemu-kvm libvirt-bin qemu-system bridge-utils ifenslave dnsmasq python-libvirt`
+  - `apt-get install virtinst libguestfs-tools --no-install-recommends`
+    you Do want to setup a supermin applaince.
   - add yourself to group libvirt
   - install all files in `etc`
   - reconfigure `/etc/network/interfaces` and `/etc/dnsmasq.conf` with the correct IPs and IP ranges
