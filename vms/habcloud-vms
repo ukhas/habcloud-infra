@@ -35,6 +35,7 @@ HOST_NETWORKS = {
     }
 }
 HOST_CPUS = {"ceto": 4, "phorcys": 8}
+VM_BASE_SIZE = {"amt": 2, "unit": "G"}
 
 
 jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
@@ -116,12 +117,30 @@ def dnsmasq_file(db, host, template):
 
 
 def check_call(command):
-    print(*command, file=sys.stderr)
+    print(*command)
     subprocess.check_call(command)
 
 def need_root():
     if os.getuid() != 0:
         raise OSError("Need root")
+
+def need_habhub_host():
+    if hostname() not in {"ceto", "phorcys"}:
+        raise ValueError("Need to be run on ceto or phorcys", host)
+
+def compare_disk_size(a, b):
+    def normalise(x):
+        if x["unit"] == "G":
+            return x["amt"] * 1024  # lvm uses gibi
+        else:
+            assert x["unit"] == "M"
+            return x["amt"]
+
+    return normalise(a) - normalise(b)
+
+def listAllDomains(conn):
+    # wtf.
+    return [conn.lookupByID(x).name() for x in conn.listDomainsID()] + conn.listDefinedDomains()
 
 
 def create(db, conn, vm_name):
@@ -132,12 +151,16 @@ def create(db, conn, vm_name):
 
     if host != vm["host"]:
         raise Exception("Must be run on {0}".format(vm["host"]))
-    if vm_name in conn.listDefinedDomains():
+    if vm_name in listAllDomains(conn):
         raise KeyError(vm_name + " already exists")
 
     assert host in {"ceto", "phorcys"}
 
-    print("Defining", vm_name, file=sys.stderr)
+    disk_cmp = compare_disk_size(VM_BASE_SIZE, vm["disk"])
+    if disk_cmp > 0:
+        raise Exception("Disk is not large enough")
+
+    print("Defining", vm_name)
     domain = conn.defineXML(domain_xml(vm))
 
     lvcreate = [
@@ -148,33 +171,56 @@ def create(db, conn, vm_name):
     ]
     check_call(lvcreate)
 
-    virt_resize = [
-        "virt-resize", "-q",
-        "--expand", "/dev/sda1",
-        "/dev/{0}/vm-base".format(host),
-        "/dev/{0}/vm-{1}".format(host, vm_name)
-    ]
-    check_call(virt_resize)
+    if disk_cmp == 0:
+        dd = [
+            "dd", "bs=1M",
+            "if=/dev/{0}/vm-base".format(host),
+            "of=/dev/{0}/vm-{1}".format(host, vm_name)
+        ]
+        check_call(dd)
+    else:
+        virt_resize = [
+            "virt-resize", "-q",
+            "--expand", "/dev/sda1",
+            "/dev/{0}/vm-base".format(host),
+            "/dev/{0}/vm-{1}".format(host, vm_name)
+        ]
+        check_call(virt_resize)
 
-    print("Starting", vm_name, file=sys.stderr)
+    print("Starting", vm_name)
     domain.create()
 
+def create_all(db, conn):
+    existing = set(listAllDomains(conn))
+    host = hostname()
+    desired = set(vm_name for vm_name, vm in db.items() if vm["host"] == host)
+
+    print("Existing:", *sorted(existing))
+    print("Desired:", *sorted(desired))
+
+    unknown = existing - desired
+    if unknown:
+        print("Warning: unrecognised VMs:", *sorted(unknown), file=sys.stderr)
+
+    to_create = desired - existing
+    print("To create:", *sorted(to_create))
+    for vm_name in to_create:
+        create(db, conn, vm_name)
+
 def sync_dnsmasq(db):
+    need_habhub_host()
     need_root()
     host = hostname()
 
-    if host not in {"ceto", "phorcys"}:
-        raise ValueError("Need to be run on ceto or phorcys", host)
-
     for fn in ("dhcp", "hosts"):
-        print("Writing dnsmasq/{0}...".format(fn), file=sys.stderr)
+        print("Writing dnsmasq/{0}...".format(fn))
         with open("/etc/dnsmasq/{0}".format(fn), "w") as f:
             f.write(dnsmasq_file(db, host, fn))
 
     with open("/run/dnsmasq/dnsmasq.pid") as f:
         pid = int(f.read())
 
-    print("HUP dnsmasq ({0})".format(pid), file=sys.stderr)
+    print("HUP dnsmasq ({0})".format(pid))
     os.kill(pid, signal.SIGHUP)
 
 
@@ -233,12 +279,22 @@ def cmd_dnsmasq_print(args):
 
 def cmd_create(args):
     db = read_db(args.db)
+    need_habhub_host()
     conn = libvirt.open(LIBVIRT_URI)
     create(db, conn, args.vm_name)
 
 def cmd_sync_dnsmasq(args):
     db = read_db(args.db)
     sync_dnsmasq(db)
+
+def cmd_create_all(args):
+    db = read_db(args.db)
+    need_habhub_host()
+    sync_dnsmasq(db)
+    conn = libvirt.open(LIBVIRT_URI)
+    create_all(db, conn)
+
+
 
 
 def main():
@@ -300,6 +356,9 @@ def main():
 
     sync_dnsmasq = subparsers.add_parser("sync-dnsmasq", help='sync and HUP dnsmasq on this box')
     sync_dnsmasq.set_defaults(func=cmd_sync_dnsmasq)
+
+    create_all = subparsers.add_parser("create-all", help="create VMs that should exist")
+    create_all.set_defaults(func=cmd_create_all)
 
     args = parser.parse_args()
     args.func(args)
