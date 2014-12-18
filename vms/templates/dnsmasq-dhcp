@@ -1,7 +1,7 @@
 {%- for vm in vms|sort(attribute='vm_name') -%}
 {%- if host == vm.host -%}
 {%- for intf in vm.interfaces -%}
-{{ intf.mac }},{{ intf.ip }},{{ vm.vm_name }},infinite
+{{ intf.mac }},{{ intf.ip }},{{ vm.vm_name }},5m
 {% endfor -%}
 {%- endif -%}
 {%- endfor -%}
