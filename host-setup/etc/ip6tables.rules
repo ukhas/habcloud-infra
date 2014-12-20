@@ -42,6 +42,14 @@
 ## Do no forwarding for random other hosts
 -A FORWARD -m physdev --physdev-is-bridged --physdev-in eth0 --physdev-out eth0 -j DROP
 
+## ICMP basics, but forbid router solicitation/advertisment.
+-A FORWARD -p icmpv6 --icmpv6-type destination-unreachable -j ACCEPT
+-A FORWARD -p icmpv6 --icmpv6-type packet-too-big -j ACCEPT
+-A FORWARD -p icmpv6 --icmpv6-type time-exceeded -j ACCEPT
+-A FORWARD -p icmpv6 --icmpv6-type parameter-problem -j ACCEPT
+-A FORWARD -p icmpv6 --icmpv6-type neighbor-solicitation -m hl --hl-eq 255 -j ACCEPT
+-A FORWARD -p icmpv6 --icmpv6-type neighbor-advertisement -m hl --hl-eq 255 -j ACCEPT
+
 ## Always allow Ping, SSH, established connections
 -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
 -A FORWARD -p icmpv6 --icmpv6-type echo-request -j ACCEPT 
