@@ -189,6 +189,7 @@ def create(db, conn, vm_name):
         check_call(virt_resize)
 
     print("Starting", vm_name)
+    domain.setAutostart(True)
     domain.create()
 
 def create_all(db, conn):
