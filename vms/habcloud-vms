@@ -24,14 +24,14 @@ AVAILABLE = {
 }
 HOST_NETWORKS = {
     'ceto': {
-        'public':  ('br0', '52:54:01:00:00:{0:02X}', '164.39.7.{0:d}'),
-        'pubpriv': ('br1', '52:54:01:01:01:{0:02X}', '10.0.1.{0:d}'),
-        'private': ('br1', '52:54:01:01:03:{0:02X}', '10.0.3.{0:d}')
+        'public':  ('br0', '52:54:01:00:00:{0:02X}', '164.39.7.{0:d}', "2a02:710:1000:700:5054:1FF:FE00:{0:02X}"),
+        'pubpriv': ('br1', '52:54:01:01:01:{0:02X}', '10.0.1.{0:d}',   None),
+        'private': ('br1', '52:54:01:01:03:{0:02X}', '10.0.3.{0:d}',   None)
     },
     'phorcys': {
-        'public':  ('br0', '52:54:02:00:00:{0:02X}', '164.39.7.{0:d}'),
-        'pubpriv': ('br1', '52:54:02:01:02:{0:02X}', '10.0.2.{0:d}'),
-        'private': ('br1', '52:54:02:01:04:{0:02X}', '10.0.2.{0:d}')
+        'public':  ('br0', '52:54:02:00:00:{0:02X}', '164.39.7.{0:d}', "2a02:710:1000:700:5054:2FF:FE00:{0:02X}"),
+        'pubpriv': ('br1', '52:54:02:01:02:{0:02X}', '10.0.2.{0:d}',   None),
+        'private': ('br1', '52:54:02:01:04:{0:02X}', '10.0.2.{0:d}',   None)
     }
 }
 HOST_CPUS = {"ceto": 4, "phorcys": 8}
@@ -80,12 +80,13 @@ def expand_config(vm_name, vm):
     host_network_config = HOST_NETWORKS[vm["host"]]
 
     def interface(dev, key):
-        network_dev, mac_template, ip_template = host_network_config[key]
+        network_dev, mac_template, ip_template, ip6_template = host_network_config[key]
         return {
             "dev": dev,
             "network": network_dev,
             "mac": mac_template.format(addr_id),
-            "ip": ip_template.format(addr_id)
+            "ip": ip_template.format(addr_id),
+            "ip6": ip6_template.format(addr_id) if ip6_template else None
         }
 
     if network == "public":
