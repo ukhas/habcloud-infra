@@ -22,8 +22,7 @@ iface br0 inet6 static
     netmask 64
     gateway 2a02:710:1000:700::1
     dns-nameservers 2620:0:ccc::2
-    up sysctl net.ipv6.conf.br0.forwarding=1
-    down sysctl net.ipv6.conf.br0.forwarding=0
+    up sysctl net.ipv6.conf.all.forwarding=1
 
 iface bond0 inet manual
     slaves eth2 eth3
