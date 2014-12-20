@@ -1,0 +1,227 @@
+#!/usr/bin/python
+from __future__ import print_function
+
+import sys
+import subprocess
+import tempfile
+
+TARGET = "controller slot=1"
+
+commands = [
+    ["hpacucli", TARGET, "show detail"],
+    ["hpacucli", TARGET, "array all",         "show detail"],
+    ["hpacucli", TARGET, "logicaldrive all",  "show detail"],
+    ["hpacucli", TARGET, "physicaldrive all", "show detail"]
+]
+
+lines = []
+for cmd in commands:
+    lines += subprocess.check_output(cmd).splitlines()
+
+deletes = [
+    "Unique Identifier",
+    "Logical Drive Label",
+    "Serial Number",
+    "Temperature"
+]
+
+lines = [l for l in lines if not any(d in l for d in deletes)]
+output = "\n".join(lines)
+
+
+expect = """
+Smart Array P400 in Slot 1
+   Bus Interface: PCI
+   Slot: 1
+   RAID 6 (ADG) Status: Enabled
+   Controller Status: OK
+   Hardware Revision: E
+   Firmware Version: 7.24
+   Rebuild Priority: Medium
+   Expand Priority: Medium
+   Surface Scan Delay: 15 secs
+   Surface Scan Mode: Idle
+   Wait for Cache Room: Disabled
+   Surface Analysis Inconsistency Notification: Disabled
+   Post Prompt Timeout: 0 secs
+   Cache Board Present: True
+   Cache Status: OK
+   Cache Ratio: 25% Read / 75% Write
+   Drive Write Cache: Disabled
+   Total Cache Size: 256 MB
+   Total Cache Memory Available: 208 MB
+   No-Battery Write Cache: Disabled
+   Cache Backup Power Source: Batteries
+   Battery/Capacitor Count: 1
+   Battery/Capacitor Status: OK
+   SATA NCQ Supported: True
+
+
+Smart Array P400 in Slot 1
+
+   Array: A
+      Interface Type: SAS
+      Unused Space: 0  MB
+      Status: OK
+      Array Type: Data
+      Spare Type: dedicated
+
+
+
+
+Smart Array P400 in Slot 1
+
+   array A
+
+      Logical Drive: 1
+         Size: 410.1 GB
+         Fault Tolerance: 1+0
+         Heads: 255
+         Sectors Per Track: 32
+         Cylinders: 65535
+         Strip Size: 128 KB
+         Full Stripe Size: 384 KB
+         Status: OK
+         Caching:  Enabled
+         Disk Name: /dev/cciss/c0d0
+         Mount Points: None
+         OS Status: LOCKED
+         Mirror Group 0:
+            physicaldrive 1I:1:7 (port 1I:box 1:bay 7, SAS, 146 GB, OK)
+            physicaldrive 1I:1:6 (port 1I:box 1:bay 6, SAS, 146 GB, OK)
+            physicaldrive 1I:1:5 (port 1I:box 1:bay 5, SAS, 146 GB, OK)
+         Mirror Group 1:
+            physicaldrive 2I:1:3 (port 2I:box 1:bay 3, SAS, 146 GB, OK)
+            physicaldrive 2I:1:2 (port 2I:box 1:bay 2, SAS, 146 GB, OK)
+            physicaldrive 2I:1:1 (port 2I:box 1:bay 1, SAS, 146 GB, OK)
+         Drive Type: Data
+
+
+Smart Array P400 in Slot 1
+
+   array A
+
+      physicaldrive 1I:1:5
+         Port: 1I
+         Box: 1
+         Bay: 5
+         Status: OK
+         Drive Type: Data Drive
+         Interface Type: SAS
+         Size: 146 GB
+         Rotational Speed: 10000
+         Firmware Revision: HPDF
+         Model: HP      DG146BB976      
+         PHY Count: 2
+         PHY Transfer Rate: Unknown, Unknown
+
+      physicaldrive 1I:1:6
+         Port: 1I
+         Box: 1
+         Bay: 6
+         Status: OK
+         Drive Type: Data Drive
+         Interface Type: SAS
+         Size: 146 GB
+         Rotational Speed: 10000
+         Firmware Revision: HPDF
+         Model: HP      DG146BB976      
+         PHY Count: 2
+         PHY Transfer Rate: Unknown, Unknown
+
+      physicaldrive 1I:1:7
+         Port: 1I
+         Box: 1
+         Bay: 7
+         Status: OK
+         Drive Type: Data Drive
+         Interface Type: SAS
+         Size: 146 GB
+         Rotational Speed: 10000
+         Firmware Revision: HPDF
+         Model: HP      DG146BB976      
+         PHY Count: 2
+         PHY Transfer Rate: Unknown, 3.0Gbps
+
+      physicaldrive 2I:1:1
+         Port: 2I
+         Box: 1
+         Bay: 1
+         Status: OK
+         Drive Type: Data Drive
+         Interface Type: SAS
+         Size: 146 GB
+         Rotational Speed: 10000
+         Firmware Revision: HPDF
+         Model: HP      DG146BB976      
+         PHY Count: 2
+         PHY Transfer Rate: Unknown, Unknown
+
+      physicaldrive 2I:1:2
+         Port: 2I
+         Box: 1
+         Bay: 2
+         Status: OK
+         Drive Type: Data Drive
+         Interface Type: SAS
+         Size: 146 GB
+         Rotational Speed: 10000
+         Firmware Revision: HPDF
+         Model: HP      DG146BB976      
+         PHY Count: 2
+         PHY Transfer Rate: Unknown, Unknown
+
+      physicaldrive 2I:1:3
+         Port: 2I
+         Box: 1
+         Bay: 3
+         Status: OK
+         Drive Type: Data Drive
+         Interface Type: SAS
+         Size: 146 GB
+         Rotational Speed: 10000
+         Firmware Revision: HPDF
+         Model: HP      DG146BB976      
+         PHY Count: 2
+         PHY Transfer Rate: Unknown, Unknown
+
+      physicaldrive 1I:1:8
+         Port: 1I
+         Box: 1
+         Bay: 8
+         Status: OK
+         Drive Type: Spare Drive
+         Interface Type: SAS
+         Size: 146 GB
+         Rotational Speed: 10000
+         Firmware Revision: HPDF
+         Model: HP      DG146BB976      
+         PHY Count: 2
+         PHY Transfer Rate: 3.0Gbps, Unknown
+
+      physicaldrive 2I:1:4
+         Port: 2I
+         Box: 1
+         Bay: 4
+         Status: OK
+         Drive Type: Spare Drive
+         Interface Type: SAS
+         Size: 146 GB
+         Rotational Speed: 10000
+         Firmware Revision: HPDF
+         Model: HP      DG146BB976      
+         PHY Count: 2
+         PHY Transfer Rate: Unknown, Unknown
+
+"""
+
+
+if output != expect:
+    print("RAID check failed", file=sys.stderr)
+    with tempfile.NamedTemporaryFile() as f_expect, tempfile.NamedTemporaryFile() as f_actual:
+        f_expect.write(expect)
+        f_actual.write(output)
+        f_expect.flush()
+        f_actual.flush()
+        subprocess.call(["diff", "-u", f_expect.name, f_actual.name], stdout=sys.stderr)
+    sys.exit(1)

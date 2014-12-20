@@ -21,6 +21,7 @@ Debian installer
 
 Post install tasks
   - configure passwordless sudo
+  - acquire and install [hpacucli](http://downloads.linux.hp.com/SDR/repo/mcp/pool/non-free/hpacucli_9.40.1-1._amd64.deb)
   - `apt-get install rsync vim git iperf`
   - `apt-get install python-jinja2 python-yaml`
   - `apt-get install qemu-kvm libvirt-bin qemu-system bridge-utils ifenslave dnsmasq python-libvirt`
