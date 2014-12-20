@@ -16,7 +16,7 @@ COMMIT
 # Rules for the host machine only
 ## Allow Ping, SSH and established connections
 -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
--A INPUT -p icmp --icmp-type 8 -j ACCEPT 
+-A INPUT -p icmp --icmp-type echo-request -j ACCEPT 
 -A INPUT -p tcp --dport 22 -m state --state NEW -j ACCEPT
 
 ## We are a DNS server to VMs only.
@@ -44,7 +44,7 @@ COMMIT
 
 ## Always allow Ping, SSH, established connections
 -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
--A FORWARD -p icmp --icmp-type 8 -j ACCEPT 
+-A FORWARD -p icmp --icmp-type echo-request -j ACCEPT 
 -A FORWARD -p tcp --dport 22 -m state --state NEW -j ACCEPT
 
 ## Don't restrict internal-internal

@@ -3,3 +3,4 @@ ebtables --init-table
 ebtables -A INPUT  --in-interface eth0  --protocol ipv4 --ip-protocol udp --ip-source-port 67:68 -j DROP
 ebtables -A OUTPUT --out-interface eth0 --protocol ipv4 --ip-protocol udp --ip-source-port 67:68 -j DROP
 ebtables -A FORWARD                     --protocol ipv4 --ip-protocol udp --ip-source-port 67:68 -j DROP
+ebtables -A OUTPUT --out-interface eth0 --protocol ipv6 --ip6-protocol ipv6-icmp --ip6-icmp-type router-advertisement -j DROP

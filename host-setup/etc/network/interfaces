@@ -36,7 +36,7 @@ iface br1 inet static
     bridge_ports bond0
     bridge_maxwait 0
     bridge_fd 0
-    address 10.0.2.NNN
+    address 10.0.NNN.NNN
     netmask 255.0.0.0
     network 10.0.0.0
     broadcast 10.255.255.255

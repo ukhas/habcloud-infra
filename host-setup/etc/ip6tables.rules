@@ -1,0 +1,59 @@
+*filter
+-P INPUT ACCEPT
+-P OUTPUT ACCEPT
+-P FORWARD ACCEPT
+
+## No IPv6 on br1
+-A INPUT -i br1 -j DROP
+-A OUTPUT -o br1 -j DROP
+-A FORWARD -i br1 -j DROP
+-A FORWARD -o br1 -j DROP
+
+# Rules for the host machine only
+
+## Localhost
+-A INPUT -i lo -j ACCEPT
+-A INPUT ! -i lo -s ::1 -j REJECT
+-A INPUT ! -i lo -d ::1 -j REJECT
+
+## Permit ICMP basics, and those required to function as a router
+-A INPUT -p icmpv6 --icmpv6-type destination-unreachable -j ACCEPT
+-A INPUT -p icmpv6 --icmpv6-type packet-too-big -j ACCEPT
+-A INPUT -p icmpv6 --icmpv6-type time-exceeded -j ACCEPT
+-A INPUT -p icmpv6 --icmpv6-type parameter-problem -j ACCEPT
+-A INPUT -p icmpv6 --icmpv6-type router-solicitation -m hl --hl-eq 255 -j ACCEPT
+-A INPUT -p icmpv6 --icmpv6-type neighbor-solicitation -m hl --hl-eq 255 -j ACCEPT
+-A INPUT -p icmpv6 --icmpv6-type neighbor-advertisement -m hl --hl-eq 255 -j ACCEPT
+
+## Allow Ping, SSH and established connections
+-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+-A INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT 
+-A INPUT -p tcp --dport 22 -m state --state NEW -j ACCEPT
+
+## We are a DNS server to VMs only.
+-A INPUT -p tcp --dport 53 -m state --state NEW -m physdev ! --physdev-in eth0 -j ACCEPT
+-A INPUT -p udp --dport 53 -m state --state NEW -m physdev ! --physdev-in eth0 -j ACCEPT
+
+-A INPUT -p icmpv6 -j DROP
+-A INPUT -j REJECT --reject-with icmp6-port-unreachable
+
+# Forwarding rules
+
+## Do no forwarding for random other hosts
+-A FORWARD -m physdev --physdev-is-bridged --physdev-in eth0 --physdev-out eth0 -j DROP
+
+## Always allow Ping, SSH, established connections
+-A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+-A FORWARD -p icmpv6 --icmpv6-type echo-request -j ACCEPT 
+-A FORWARD -p tcp --dport 22 -m state --state NEW -j ACCEPT
+
+## Let VM public initiate connections to hosts on the internet
+-A FORWARD -m physdev --physdev-is-bridged --physdev-out eth0 -m state --state NEW -j ACCEPT
+
+## Allow HTTP to public VMs (from the world & other public VMs)
+### (Also allows new HTTP conns to hosts on the internet; irrelevant)
+-A FORWARD -o br0 -p tcp --dport 80 -m state --state NEW -j ACCEPT
+
+-A FORWARD -j REJECT --reject-with icmp6-port-unreachable
+
+COMMIT
