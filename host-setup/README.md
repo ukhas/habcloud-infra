@@ -1,8 +1,9 @@
 # Debian install
 
 Debian installer booted 
-  - with bnx2 firmware embedded
+  - [with bnx2 firmware embedded](https://github.com/danielrichman/preseed)
   - with command line `append install vga=normal initrd=initrd.gz fb=false console=tty0 console=ttyS1,9600n8`
+
 
 iLO commands:
   - `ilo-> vm cdrom insert http://www.danielrichman.co.uk/files/bnx2-deb7.iso`
@@ -11,7 +12,6 @@ iLO commands:
   - `ilo-> power on`
 
 Disk config: Raid 10, stripe across 3 mirror pairs + 2 hot spares (set before boot)
-TODO: check config (IIRC problems), set up `hpaucli`, set up monitoring
 
 Debian installer
   - Static configure networking.
