@@ -1,0 +1,5 @@
+ - Deploy a VM in the normal way
+ - Use `virt-rescue` to root it; reboot and use the root password to get a shell.
+ - `apt-get install salt-master git python-git`
+ - `wget -O /etc/salt/master https://raw.githubusercontent.com/ukhas/habcloud-infra/master/salt-config/habcloud.conf`
+ - `service salt-master restart`
