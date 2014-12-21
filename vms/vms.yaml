@@ -4,3 +4,9 @@ salt:
   ip: [private, 2]
   ram: {amt: 1, unit: GiB}
   vcpus: 1
+scratch:
+  disk: {amt: 2, unit: G}
+  host: phorcys
+  ip: [public, 115]
+  ram: {amt: 1, unit: GiB}
+  vcpus: 1
