@@ -16,8 +16,9 @@ Disk config: Raid 10, stripe across 3 mirror pairs + 2 hot spares (set before bo
 Debian installer
   - Static configure networking.
   - Single LVM partition on raid disks.
-  - Volume group name: phorcys
+  - Volume group name: ceto/phorcys
   - 8192M partition “host-root” ext4 /
+  - Temporary username `habcloud`
 
 Post install tasks
   - configure passwordless sudo
@@ -36,6 +37,10 @@ Post install tasks
   - `sudo virsh net-create libvirt/br0.xml`
   - `sudo virsh net-create libvirt/br1.xml`
   - `sudo virsh pool-create libvirt/lvm-pool-$HOSTNAME.xml`
+
+After [bootstrapping salt](../salt-config/bootstrapping.md)
+  - Add the salt Debian repo, install salt-minion, accept the key, and let it configure the rest of the master.
+  - Delete the temporary user with prejudice.
 
 # IP Address allcation
 
