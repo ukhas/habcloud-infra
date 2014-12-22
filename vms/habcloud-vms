@@ -24,12 +24,12 @@ AVAILABLE = {
 }
 HOST_NETWORKS = {
     'ceto': {
-        'public':  ('br0', '52:54:01:00:00:{0:02X}', '164.39.7.{0:d}', "2a02:710:1000:700:5054:1FF:FE00:{0:02X}"),
+        'public':  ('br0', '52:54:01:00:00:{0:02X}', '164.39.7.{0:d}', "2a02:710:1000:700:5054:1ff:fe00:{0:02x}"),
         'pubpriv': ('br1', '52:54:01:01:01:{0:02X}', '10.0.1.{0:d}',   None),
         'private': ('br1', '52:54:01:01:03:{0:02X}', '10.0.3.{0:d}',   None)
     },
     'phorcys': {
-        'public':  ('br0', '52:54:02:00:00:{0:02X}', '164.39.7.{0:d}', "2a02:710:1000:700:5054:2FF:FE00:{0:02X}"),
+        'public':  ('br0', '52:54:02:00:00:{0:02X}', '164.39.7.{0:d}', "2a02:710:1000:700:5054:2ff:fe00:{0:02x}"),
         'pubpriv': ('br1', '52:54:02:01:02:{0:02X}', '10.0.2.{0:d}',   None),
         'private': ('br1', '52:54:02:01:04:{0:02X}', '10.0.4.{0:d}',   None)
     }
@@ -58,7 +58,6 @@ def allocate(db, host, vm_name, ram, vcpus, disk, network):
     if vcpus > HOST_CPUS[host]:
         raise ValueError("{0} only has {1} cores".format(host, HOST_CPUS[host]))
 
-
     networks = available_addr_ids(db)
     available = networks[network]
 
@@ -79,11 +78,12 @@ def expand_config(vm_name, vm):
     network, addr_id = vm["ip"]
     host_network_config = HOST_NETWORKS[vm["host"]]
 
-    def interface(dev, key):
-        network_dev, mac_template, ip_template, ip6_template = host_network_config[key]
+    def interface(dev, ip_type):
+        bridge, mac_template, ip_template, ip6_template = host_network_config[ip_type]
         return {
             "dev": dev,
-            "network": network_dev,
+            "bridge": bridge,
+            "ip_type": ip_type,
             "mac": mac_template.format(addr_id),
             "ip": ip_template.format(addr_id),
             "ip6": ip6_template.format(addr_id) if ip6_template else None
@@ -110,11 +110,41 @@ def domain_xml(vm):
     template = jinja_env.get_template('domain.xml')
     return template.render(**vm)
 
-def dnsmasq_file(db, host, template):
-    assert template in {'hosts', 'dhcp'}
+def dnsmasq_dhcp(db, host):
     vms = [expand_config(name, cfg) for name, cfg in db.items()]
-    template = jinja_env.get_template('dnsmasq-' + template)
+    template = jinja_env.get_template('dnsmasq-dhcp')
     return template.render(host=host, vms=vms)
+
+def dnsmasq_hosts(db):
+    ips = {}
+    def add(ip, host):
+        if ip is None:
+            return
+        ips.setdefault(ip, set())
+        assert host not in ips[ip]
+        ips[ip].add(host)
+
+    for name, cfg in db.items():
+        cfg = expand_config(name, cfg)
+        for intf in cfg["interfaces"]:
+            if intf["ip_type"] in {"private", "pubpriv"}:
+                suffixes = ['', '.habhub.org', '.private.habhub.org']
+            elif intf["ip_type"] == "public":
+                suffixes = ['.public.habhub.org']
+            else:
+                assert False
+
+            for s in suffixes:
+                h = cfg["vm_name"] + s
+                add(intf["ip"], h)
+                add(intf["ip6"], h)
+
+    fst = lambda (a, b): a
+    ips = sorted(ips.items(), key=fst)
+
+    line = lambda (ip, hosts): " ".join([ip] + sorted(hosts))
+    lines = list(map(line, ips))
+    return "\n".join(lines) + "\n"
 
 
 def check_call(command):
@@ -214,10 +244,13 @@ def sync_dnsmasq(db):
     need_root()
     host = hostname()
 
-    for fn in ("dhcp", "hosts"):
-        print("Writing dnsmasq/{0}...".format(fn))
-        with open("/etc/dnsmasq/{0}".format(fn), "w") as f:
-            f.write(dnsmasq_file(db, host, fn))
+    print("Writing hosts...")
+    with open("/etc/dnsmasq/hosts", "w") as f:
+        f.write(dnsmasq_hosts(db))
+
+    print("Writing dhcp...")
+    with open("/etc/dnsmasq/dhcp", "w") as f:
+        f.write(dnsmasq_dhcp(db, host))
 
     with open("/run/dnsmasq/dnsmasq.pid") as f:
         pid = int(f.read())
@@ -275,9 +308,13 @@ def cmd_xml(args):
     vm = expand_config(args.vm_name, db[args.vm_name])
     print(domain_xml(vm))
 
-def cmd_dnsmasq_print(args):
+def cmd_dnsmasq_dhcp(args):
     db = read_db(args.db)
-    print(dnsmasq_file(db, args.host, args.template), end='')
+    print(dnsmasq_dhcp(db, args.host), end='')
+
+def cmd_dnsmasq_hosts(args):
+    db = read_db(args.db)
+    print(dnsmasq_hosts(db), end='')
 
 def cmd_create(args):
     db = read_db(args.db)
@@ -345,12 +382,11 @@ def main():
     xml.add_argument("vm_name", help='guest hostname')
 
     dnsmasq_dhcp = subparsers.add_parser("dnsmasq-dhcp", help='dnsmasq dhcp-hosts file')
-    dnsmasq_dhcp.set_defaults(func=cmd_dnsmasq_print, template='dhcp')
+    dnsmasq_dhcp.set_defaults(func=cmd_dnsmasq_dhcp)
     dnsmasq_dhcp.add_argument("host", help='VM host', choices=HOST_NETWORKS.keys())
 
     dnsmasq_hosts = subparsers.add_parser("dnsmasq-hosts", help='dnsmasq hosts file')
-    dnsmasq_hosts.set_defaults(func=cmd_dnsmasq_print, template='hosts')
-    dnsmasq_hosts.add_argument("host", help='VM host', choices=HOST_NETWORKS.keys())
+    dnsmasq_hosts.set_defaults(func=cmd_dnsmasq_hosts)
 
     create = subparsers.add_parser("create", help='create an allocate VM on this box')
     create.set_defaults(func=cmd_create)

@@ -1,9 +1,0 @@
-{%- for vm in vms|sort(attribute='vm_name') -%}
-{%- for intf in vm.interfaces -%}
-{%- if intf.network != 'br0' -%}
-{{ intf.ip }}	{{ vm.vm_name }} {{ vm.vm_name }}.habhub.org {{ vm.vm_name }}.private.habhub.org
-{% else -%}
-{{ intf.ip }}   {{ vm.vm_name }}.public.habhub.org
-{% endif -%}
-{%- endfor -%}
-{%- endfor -%}
