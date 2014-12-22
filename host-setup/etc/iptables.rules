@@ -5,16 +5,27 @@
 COMMIT
 
 *filter
--P INPUT ACCEPT
+-P INPUT DROP
+-P FORWARD DROP
 -P OUTPUT ACCEPT
--P FORWARD ACCEPT
+
+
+# Deny rules
 
 ## Ban salt on br0 completely.
 -A OUTPUT  -o br0 -p tcp --dport 4505:4506 -j DROP
 -A FORWARD -o br0 -p tcp --dport 4505:4506 -j DROP
 -A FORWARD -i br0 -p tcp --dport 4505:4506 -j DROP
 
-# Rules for the host machine only
+## Do no forwarding for random other hosts
+-A FORWARD -m physdev --physdev-is-bridged --physdev-in eth0 --physdev-out eth0 -j DROP
+
+## Ban email out for everyone but the support box
+-A OUTPUT  -p tcp --dport 25 -j DROP
+-A FORWARD -p tcp --dport 25 ! -s support.public.habhub.org -j DROP
+
+
+# Accepts: rules for the host machine only
 
 -A INPUT -i lo -j ACCEPT
 -A INPUT ! -i lo -s 127.0.0.1 -j REJECT
@@ -32,9 +43,8 @@ COMMIT
 ## This box is a DHCP server. Note that EBTables keeps this away from eth0
 -A INPUT -m udp -p udp --dport 67 -j ACCEPT
 
--A INPUT -j REJECT --reject-with icmp-port-unreachable
 
-# internal & external bridge:
+# Accepts: internal & external bridge
 
 ## Rules in the forward chain affect
 ##  - internet -> VM public    (-i br0 -o br0 --physdev-in eth0)
@@ -45,9 +55,6 @@ COMMIT
 ##  - VM private -> internet   (-i br1 -o br0 --physdev-out eth0)
 ## Note that connections initiated by a host to a VM on the same box
 ## are exempt (pass through OUTPUT chain, not FORWARD).
-
-## Do no forwarding for random other hosts
--A FORWARD -m physdev --physdev-is-bridged --physdev-in eth0 --physdev-out eth0 -j DROP
 
 ## Always allow Ping, SSH, established connections
 -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
@@ -66,6 +73,10 @@ COMMIT
 ### (Also allows new HTTP conns to hosts on the internet; irrelevant)
 -A FORWARD -o br0 -p tcp --dport 80 -m state --state NEW -j ACCEPT
 
+
+# fallback
+
+-A INPUT -j REJECT --reject-with icmp-port-unreachable
 -A FORWARD -j REJECT --reject-with icmp-port-unreachable
 
 COMMIT
