@@ -10,7 +10,7 @@ COMMIT
 -P OUTPUT ACCEPT
 
 
-# Deny rules
+# Early bans
 
 ## Ban salt on br0 completely.
 -A OUTPUT  -o br0 -p tcp --dport 4505:4506 -j DROP
@@ -25,7 +25,7 @@ COMMIT
 -A FORWARD -o br0 -p tcp --dport 25 ! -s support.public.habhub.org -j DROP
 
 
-# Accepts: rules for the host machine only
+# Rules for the host machine only
 
 -A INPUT -i lo -j ACCEPT
 -A INPUT ! -i lo -s 127.0.0.1 -j REJECT
@@ -44,7 +44,7 @@ COMMIT
 -A INPUT -m udp -p udp --dport 67 -j ACCEPT
 
 
-# Accepts: internal & external bridge
+# Internal & external bridge
 
 ## Rules in the forward chain affect
 ##  - internet -> VM public    (-i br0 -o br0 --physdev-in eth0)
@@ -74,7 +74,7 @@ COMMIT
 -A FORWARD -o br0 -p tcp --dport 80 -m state --state NEW -j ACCEPT
 
 
-# fallback
+# Nicer than a DROP
 
 -A INPUT -j REJECT --reject-with icmp-port-unreachable
 -A FORWARD -j REJECT --reject-with icmp-port-unreachable
