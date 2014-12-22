@@ -10,3 +10,9 @@ scratch:
   ip: [public, 115]
   ram: {amt: 1, unit: GiB}
   vcpus: 1
+support:
+  disk: {amt: 5, unit: G}
+  host: ceto
+  ip: [public, 116]
+  ram: {amt: 1, unit: GiB}
+  vcpus: 1
