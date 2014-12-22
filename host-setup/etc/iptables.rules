@@ -13,23 +13,24 @@ COMMIT
 # Early bans
 
 ## Ban salt on br0 completely.
--A OUTPUT  -o br0 -p tcp --dport 4505:4506 -j DROP
--A FORWARD -o br0 -p tcp --dport 4505:4506 -j DROP
--A FORWARD -i br0 -p tcp --dport 4505:4506 -j DROP
+-A OUTPUT  -o br0 -p tcp --dport 4505:4506 -j REJECT
+-A FORWARD -o br0 -p tcp --dport 4505:4506 -j REJECT
+-A FORWARD -i br0 -p tcp --dport 4505:4506 -j REJECT
 
 ## Do no forwarding for random other hosts
 -A FORWARD -m physdev --physdev-is-bridged --physdev-in eth0 --physdev-out eth0 -j DROP
 
 ## Ban email out for everyone but the support box
--A OUTPUT  -o br0 -p tcp --dport 25 -j DROP
--A FORWARD -o br0 -p tcp --dport 25 ! -s support.public.habhub.org -j DROP
+-A OUTPUT  -o br0 -p tcp --dport 25 -j REJECT
+-A FORWARD -o br0 -p tcp --dport 25 ! -s support.public.habhub.org -j REJECT
+
+## Localhost stuff
+-A INPUT -i lo -j ACCEPT
+-A INPUT ! -i lo -s 127.0.0.0/8 -j DROP
+-A INPUT ! -i lo -d 127.0.0.0/8 -j DROP
 
 
 # Rules for the host machine only
-
--A INPUT -i lo -j ACCEPT
--A INPUT ! -i lo -s 127.0.0.1 -j REJECT
--A INPUT ! -i lo -d 127.0.0.1 -j REJECT
 
 ## Allow Ping, SSH and established connections
 -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
@@ -76,7 +77,7 @@ COMMIT
 
 # Nicer than a DROP
 
--A INPUT -j REJECT --reject-with icmp-port-unreachable
--A FORWARD -j REJECT --reject-with icmp-port-unreachable
+-A INPUT -j REJECT
+-A FORWARD -j REJECT
 
 COMMIT
