@@ -20,8 +20,8 @@
 -A FORWARD -m physdev --physdev-is-bridged --physdev-in eth0 --physdev-out eth0 -j DROP
 
 ## Ban email out for everyone but the support box
--A OUTPUT  -p tcp --dport 25 -j DROP
--A FORWARD -p tcp --dport 25 ! -s support.public.habhub.org -j DROP
+-A OUTPUT  -o br0 -p tcp --dport 25 -j DROP
+-A FORWARD -o br0 -p tcp --dport 25 ! -s support.public.habhub.org -j DROP
 
 
 # Accepts: rules for the host machine only
