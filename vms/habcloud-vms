@@ -290,7 +290,7 @@ def cmd_list(args):
     db = read_db(args.db)
 
     for key in sorted(db.keys()):
-        vm = config_for(db, key)
+        vm = expand_config(key, db[key])
         row = (vm["vm_name"], vm["host"])
         row += tuple(intf["ip"] for intf in vm["interfaces"])
         table.append(row)
