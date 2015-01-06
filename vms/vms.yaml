@@ -1,3 +1,9 @@
+adamscratch:
+  disk: {amt: 2, unit: G}
+  host: ceto
+  ip: [private, 3]
+  ram: {amt: 1, unit: GiB}
+  vcpus: 1
 salt:
   disk: {amt: 5, unit: G}
   host: ceto
