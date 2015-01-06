@@ -27,7 +27,6 @@
         <interface type='network'>
             <mac address='{{ intf.mac }}'/>
             <source network='{{ intf.bridge }}'/>
-            <target dev='vnet{{ intf.dev }}'/>
             <model type='virtio'/>
             <alias name='net{{ intf.dev }}'/>
         </interface>
