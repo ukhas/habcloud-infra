@@ -128,9 +128,9 @@ def dnsmasq_hosts(db):
         cfg = expand_config(name, cfg)
         for intf in cfg["interfaces"]:
             if intf["ip_type"] in {"private", "pubpriv"}:
-                suffixes = ['.habhub.org', '', '.private.habhub.org']
+                suffixes = ['.vm.habhub.org', '', '.private.vm.habhub.org']
             elif intf["ip_type"] == "public":
-                suffixes = ['.habhub.org', '', '.public.habhub.org']
+                suffixes = ['.vm.habhub.org', '', '.public.vm.habhub.org']
             else:
                 assert False
 

@@ -22,7 +22,7 @@ COMMIT
 
 ## Ban email out for everyone but the support box
 -A OUTPUT  -o br0 -p tcp --dport 25 -j REJECT
--A FORWARD -o br0 -p tcp --dport 25 ! -s support.public.habhub.org -j REJECT
+-A FORWARD -o br0 -p tcp --dport 25 ! -s support.public.vm.habhub.org -j REJECT
 
 ## Localhost stuff
 -A INPUT -i lo -j ACCEPT
