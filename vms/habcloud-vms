@@ -352,6 +352,7 @@ def main():
         n = int(s)
         if n < 0:
             raise ValueError(n)
+        return n
     def disk(s): return parse_amount_units(s, {"G", "M"})
 
 
