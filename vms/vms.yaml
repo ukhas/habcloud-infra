@@ -9,7 +9,7 @@ salt:
   host: ceto
   ip: [private, 2]
   ram: {amt: 2, unit: GiB}
-  vcpus: 4
+  vcpus: 2
 scratch:
   disk: {amt: 4, unit: G}
   host: phorcys
@@ -21,4 +21,4 @@ support:
   host: ceto
   ip: [public, 116]
   ram: {amt: 1, unit: GiB}
-  vcpus: 4
+  vcpus: 2
