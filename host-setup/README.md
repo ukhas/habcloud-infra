@@ -39,6 +39,7 @@ Post install tasks
   - `sudo virsh pool-create libvirt/lvm-pool-$HOSTNAME.xml`
 
 After [bootstrapping salt](../salt-config/bootstrapping.md)
+  * Copy host-setup/etc/salt to /etc/salt
   - Add the salt Debian repo, install salt-minion, accept the key, and let it configure the rest of the master.
   - Delete the temporary user with prejudice.
 
