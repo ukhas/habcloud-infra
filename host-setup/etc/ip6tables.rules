@@ -32,6 +32,7 @@
 # Rules for the host machine only
 
 ## Permit ICMP basics, and those required to function as a router
+-A INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT 
 -A INPUT -p icmpv6 --icmpv6-type destination-unreachable -j ACCEPT
 -A INPUT -p icmpv6 --icmpv6-type packet-too-big -j ACCEPT
 -A INPUT -p icmpv6 --icmpv6-type time-exceeded -j ACCEPT
@@ -41,9 +42,8 @@
 -A INPUT -p icmpv6 --icmpv6-type neighbor-advertisement -m hl --hl-eq 255 -j ACCEPT
 -A INPUT -p icmpv6 -j DROP
 
-## Allow Ping, SSH and established connections
+## Allow SSH and established connections
 -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
--A INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT 
 -A INPUT -p tcp --dport 22 -m state --state NEW -j ACCEPT
 
 ## We are a DNS server to VMs only.
@@ -54,6 +54,7 @@
 # Forwarding rules
 
 ## ICMP basics, but forbid router solicitation/advertisment.
+-A FORWARD -p icmpv6 --icmpv6-type echo-request -j ACCEPT 
 -A FORWARD -p icmpv6 --icmpv6-type destination-unreachable -j ACCEPT
 -A FORWARD -p icmpv6 --icmpv6-type packet-too-big -j ACCEPT
 -A FORWARD -p icmpv6 --icmpv6-type time-exceeded -j ACCEPT
@@ -62,9 +63,8 @@
 -A FORWARD -p icmpv6 --icmpv6-type neighbor-advertisement -m hl --hl-eq 255 -j ACCEPT
 -A FORWARD -p icmpv6 -j DROP
 
-## Always allow Ping, SSH, established connections
+## Always allow SSH, established connections
 -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
--A FORWARD -p icmpv6 --icmpv6-type echo-request -j ACCEPT 
 -A FORWARD -p tcp --dport 22 -m state --state NEW -j ACCEPT
 
 ## Let VM public initiate connections to hosts on the internet
