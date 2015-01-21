@@ -12,7 +12,7 @@ habhub:
   vcpus: 2
 predictor:
   disk: {amt: 20, unit: G}
-  host: ceto
+  host: phorcys
   ip: [public, 117]
   ram: {amt: 8, unit: GiB}
   vcpus: 4
