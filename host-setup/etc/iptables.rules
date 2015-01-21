@@ -10,6 +10,10 @@ COMMIT
 -P OUTPUT ACCEPT
 
 
+# Temporary hack: allow nagios to kraken & tiamat
+-A FORWARD -s 77.75.187.22/32 -d 77.75.187.10/31 -p tcp -m tcp --dport 5666 -j ACCEPT
+
+
 # Early bans
 
 ## Ban salt on br0 completely.
