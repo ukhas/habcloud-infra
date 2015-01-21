@@ -4,6 +4,18 @@ adamscratch:
   ip: [private, 3]
   ram: {amt: 1, unit: GiB}
   vcpus: 2
+habhub:
+  disk: {amt: 4, unit: G}
+  host: ceto
+  ip: [public, 115]
+  ram: {amt: 2, unit: GiB}
+  vcpus: 2
+predictor:
+  disk: {amt: 20, unit: G}
+  host: ceto
+  ip: [public, 117]
+  ram: {amt: 8, unit: GiB}
+  vcpus: 4
 salt:
   disk: {amt: 5, unit: G}
   host: ceto
