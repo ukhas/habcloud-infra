@@ -33,6 +33,7 @@
 
 ## Permit ICMP basics, and those required to function as a router
 -A INPUT -p icmpv6 --icmpv6-type echo-request -j ACCEPT 
+-A INPUT -p icmpv6 --icmpv6-type echo-reply -j ACCEPT 
 -A INPUT -p icmpv6 --icmpv6-type destination-unreachable -j ACCEPT
 -A INPUT -p icmpv6 --icmpv6-type packet-too-big -j ACCEPT
 -A INPUT -p icmpv6 --icmpv6-type time-exceeded -j ACCEPT
@@ -55,6 +56,7 @@
 
 ## ICMP basics, but forbid router solicitation/advertisment.
 -A FORWARD -p icmpv6 --icmpv6-type echo-request -j ACCEPT 
+-A FORWARD -p icmpv6 --icmpv6-type echo-reply -j ACCEPT 
 -A FORWARD -p icmpv6 --icmpv6-type destination-unreachable -j ACCEPT
 -A FORWARD -p icmpv6 --icmpv6-type packet-too-big -j ACCEPT
 -A FORWARD -p icmpv6 --icmpv6-type time-exceeded -j ACCEPT
