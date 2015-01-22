@@ -14,8 +14,6 @@ from platform import node as hostname
 from contextlib import contextmanager
 
 import yaml
-import jinja2
-import libvirt
 
 LIBVIRT_URI = "qemu:///system"
 AVAILABLE = {
@@ -38,9 +36,11 @@ HOST_CPUS = {"ceto": 4, "phorcys": 8}
 VM_BASE_SIZE = {"amt": 2, "unit": "G"}
 
 
-jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
-jinja_loader = jinja2.FileSystemLoader(jinja_dir)
-jinja_env = jinja2.Environment(loader=jinja_loader, undefined=jinja2.StrictUndefined)
+def jinja_env():
+    import jinja2
+    jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
+    jinja_loader = jinja2.FileSystemLoader(jinja_dir)
+    return jinja2.Environment(loader=jinja_loader, undefined=jinja2.StrictUndefined)
 
 
 def available_addr_ids(db):
@@ -107,12 +107,12 @@ def expand_config(vm_name, vm):
 
 
 def domain_xml(vm):
-    template = jinja_env.get_template('domain.xml')
+    template = jinja_env().get_template('domain.xml')
     return template.render(**vm)
 
 def dnsmasq_dhcp(db, host):
     vms = [expand_config(name, cfg) for name, cfg in db.items()]
-    template = jinja_env.get_template('dnsmasq-dhcp')
+    template = jinja_env().get_template('dnsmasq-dhcp')
     return template.render(host=host, vms=vms)
 
 def dnsmasq_hosts(db):
@@ -176,6 +176,7 @@ def listAllDomains(conn):
 
 def create(db, conn, vm_name):
     need_root()
+    import jinja2  # will need it below
 
     vm = expand_config(vm_name, db[vm_name])
     host = hostname()
@@ -414,6 +415,7 @@ def cmd_dnsmasq_hosts(args):
     print(dnsmasq_hosts(db), end='')
 
 def cmd_create(args):
+    import libvirt
     db = read_db(args.db)
     need_habhub_host()
     conn = libvirt.open(LIBVIRT_URI)
@@ -433,6 +435,7 @@ def cmd_sync_linode(args):
     sync_linode(public_records(db))
 
 def cmd_create_all(args):
+    import libvirt
     db = read_db(args.db)
     need_habhub_host()
     sync_dnsmasq(db)
