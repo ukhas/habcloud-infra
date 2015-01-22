@@ -259,9 +259,13 @@ def sync_dnsmasq(db):
     os.kill(pid, signal.SIGHUP)
 
 def public_records(db):
-    dkim_public = subprocess.check_output(
-        ["ssh", "support.vm.habhub.org", "cat", "/etc/exim4/dkim.public.key"]
-    )
+    if hostname() == "support":
+        with open("/etc/exim4/dkim.public.key") as f:
+            dkim_public = f.read()
+    else:
+        dkim_public = subprocess.check_output(
+            ["ssh", "support.vm.habhub.org", "cat", "/etc/exim4/dkim.public.key"]
+        )
 
     dkim_public = dkim_public.split()
     assert dkim_public[0] == "-----BEGIN PUBLIC KEY-----"
