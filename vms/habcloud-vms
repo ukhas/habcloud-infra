@@ -259,6 +259,15 @@ def sync_dnsmasq(db):
     print("HUP dnsmasq ({0})".format(pid))
     os.kill(pid, signal.SIGHUP)
 
+
+# records are (type : TXT | A | AAAA, name : string, target : string)
+
+def public_record_to_string(type, name, target):
+    limit = 40
+    if len(target) > limit:
+        target = target[:limit] + "..."
+    return "{:4} {:30} {}".format(type, name, target)
+
 def public_records(db):
     if hostname() == "support":
         with open("/etc/exim4/dkim.public.key") as f:
@@ -268,30 +277,29 @@ def public_records(db):
             ["ssh", "support.vm.habhub.org", "cat", "/etc/exim4/dkim.public.key"]
         )
 
-    dkim_public = dkim_public.split()
+    dkim_public = dkim_public.splitlines()
     assert dkim_public[0] == "-----BEGIN PUBLIC KEY-----"
     assert dkim_public[-1] == "-----END PUBLIC KEY-----"
     dkim_public = "".join(dkim_public[1:-1])
 
-    txt_records = [
-        "v=spf1 a:support.vm.habhub.org -all",
-        "v=DKIM1; p={}; t=s".format(dkim_public)
-    ]
+    spf_record  = "v=spf1 a:support.vm.habhub.org -all"
+    dkim_record = "v=DKIM1; p={}; t=s".format(dkim_public)
 
     for name, cfg in db.items():
         cfg = expand_config(name, cfg)
-        for intf in cfg["interfaces"]:
-            for tgt in txt_records:
-                yield {"TYPE": "TXT",  "NAME": cfg["vm_name"], "TARGET": tgt}
 
+        yield "TXT", cfg["vm_name"], spf_record
+        yield "TXT", "support._domainkey." + cfg["vm_name"], dkim_record
+
+        for intf in cfg["interfaces"]:
             if intf["ip_type"] == "public":
-                yield {"TYPE": "A",    "NAME": cfg["vm_name"], "TARGET": intf["ip"]}
-                yield {"TYPE": "AAAA", "NAME": cfg["vm_name"], "TARGET": intf["ip6"]}
+                yield "A",    cfg["vm_name"], intf["ip"]
+                yield "AAAA", cfg["vm_name"], intf["ip6"]
 
 def sync_linode(records):
     # lazy import linode api so that we can run other things
     from linode.api import Api
-    linode = Api('APIKEY')
+    linode = Api(input("api key"))
 
     for d in linode.domain_list():
         if d["DOMAIN"] == "vm.habhub.org":
@@ -300,62 +308,38 @@ def sync_linode(records):
     else:
         raise ValueError("couldn't find vm.habhub.org")
 
-    def radd(r):
+    def radd(type, name, target):
         linode.domain_resource_create(
             DomainID=vm_habhub_org,
-            Type=r["TYPE"],
-            Name=r["NAME"],
-            Target=r["TARGET"]
+            Type=type,
+            Name=name,
+            Target=target
         )
-    def rdelete(r):
+    def rdelete(res):
         linode.domain_resource_delete(
             DomainID=vm_habhub_org,
-            ResourceID=r["RESOURCEID"]
+            ResourceID=res["RESOURCEID"]
         )
-    def rupdate(old, new):
-        linode.domain_resource_update(
-            DomainID=vm_habhub_org,
-            ResourceID=old["RESOURCEID"],
-            Type=new["TYPE"],
-            Name=new["NAME"],
-            Target=new["TARGET"]
-        )
+    def rlist(): return linode.domain_resource_list(domainid=vm_habhub_org)
 
-    def rkey(r): return (r["TYPE"], r["NAME"])
-    def req(a, b):
-        assert rkey(a) == rkey(b)
-        return a["TARGET"] == b["TARGET"]
-    def rstr(r):
-        return "{TYPE:4} {NAME:10} {TARGET}".format(*r)
+    def tuple_of_res(r): return (res["TYPE"].upper(), res["NAME"], res["TARGET"])
+    rstr = public_record_to_string
 
-    records = list(records)
-    n_records = len(records)
+    desired = set(records)
 
-    records = {rkey(r): r for r in records}
-    assert len(records) == n_records # should have no duplicate keys
-
-    checked = set()
-
-    for r in linode.domain_resource_list(domainid=domain['DOMAINID']):
-        k = rkey(r)
-        n = records.get(k, None)
-        if n is None:
-            print("Removing", rstr(r))
-            rdelete(r)
-        elif not req(r, n):
-            print("Replace ", rstr(n))
-            rupdate(r, n)
-            checked.add(k)
+    for res in rlist():
+        tup = tuple_of_res(res)
+        if tup not in desired:
+            print("Removing", rstr(*tup))
+            rdelete(res)
         else:
-            print("OK      ", rstr(r))
-            checked.add(k)
+            print("OK      ", rstr(*tup))
+            desired.remove(tup)
 
-    assert set(records) >= checked
+    for tup in desired:
+        print("Add     ", rstr(*tup))
+        radd(*tup)
 
-    for k in set(records) - checked:
-        n = records[k]
-        print("Add     ", rstr(n))
-        radd(n)
 
 def read_db(filename):
     with open(filename, 'r') as f:
@@ -428,7 +412,7 @@ def cmd_sync_dnsmasq(args):
 def cmd_public_records(args):
     db = read_db(args.db)
     for r in public_records(db):
-        print("{TYPE:4} {NAME:10} {TARGET}".format(*r))
+        print(public_record_to_string(*r))
 
 def cmd_sync_linode(args):
     db = read_db(args.db)
