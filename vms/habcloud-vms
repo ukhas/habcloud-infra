@@ -258,6 +258,99 @@ def sync_dnsmasq(db):
     print("HUP dnsmasq ({0})".format(pid))
     os.kill(pid, signal.SIGHUP)
 
+def public_records(db):
+    dkim_public = subprocess.check_output(
+        ["ssh", "support.vm.habhub.org", "cat", "/etc/exim4/dkim.public.key"]
+    )
+
+    dkim_public = dkim_public.split()
+    assert dkim_public[0] == "-----BEGIN PUBLIC KEY-----"
+    assert dkim_public[-1] == "-----END PUBLIC KEY-----"
+    dkim_public = "".join(dkim_public[1:-1])
+
+    txt_records = [
+        "v=spf1 a:support.vm.habhub.org -all",
+        "v=DKIM1; p={}; t=s".format(dkim_public)
+    ]
+
+    for name, cfg in db.items():
+        cfg = expand_config(name, cfg)
+        for intf in cfg["interfaces"]:
+            for tgt in txt_records:
+                yield {"TYPE": "TXT",  "NAME": cfg["vm_name"], "TARGET": tgt}
+
+            if intf["ip_type"] == "public":
+                yield {"TYPE": "A",    "NAME": cfg["vm_name"], "TARGET": intf["ip"]}
+                yield {"TYPE": "AAAA", "NAME": cfg["vm_name"], "TARGET": intf["ip6"]}
+
+def sync_linode(records):
+    # lazy import linode api so that we can run other things
+    from linode.api import Api
+    linode = Api('APIKEY')
+
+    for d in linode.domain_list():
+        if d["DOMAIN"] == "vm.habhub.org":
+            vm_habhub_org = d["DOMAINID"]
+            break
+    else:
+        raise ValueError("couldn't find vm.habhub.org")
+
+    def radd(r):
+        linode.domain_resource_create(
+            DomainID=vm_habhub_org,
+            Type=r["TYPE"],
+            Name=r["NAME"],
+            Target=r["TARGET"]
+        )
+    def rdelete(r):
+        linode.domain_resource_delete(
+            DomainID=vm_habhub_org,
+            ResourceID=r["RESOURCEID"]
+        )
+    def rupdate(old, new):
+        linode.domain_resource_update(
+            DomainID=vm_habhub_org,
+            ResourceID=old["RESOURCEID"],
+            Type=new["TYPE"],
+            Name=new["NAME"],
+            Target=new["TARGET"]
+        )
+
+    def rkey(r): return (r["TYPE"], r["NAME"])
+    def req(a, b):
+        assert rkey(a) == rkey(b)
+        return a["TARGET"] == b["TARGET"]
+    def rstr(r):
+        return "{TYPE:4} {NAME:10} {TARGET}".format(*r)
+
+    records = list(records)
+    n_records = len(records)
+
+    records = {rkey(r): r for r in records}
+    assert len(records) == n_records # should have no duplicate keys
+
+    checked = set()
+
+    for r in linode.domain_resource_list(domainid=domain['DOMAINID']):
+        k = rkey(r)
+        n = records.get(k, None)
+        if n is None:
+            print("Removing", rstr(r))
+            rdelete(r)
+        elif not req(r, n):
+            print("Replace ", rstr(n))
+            rupdate(r, n)
+            checked.add(k)
+        else:
+            print("OK      ", rstr(r))
+            checked.add(k)
+
+    assert set(records) >= checked
+
+    for k in set(records) - checked:
+        n = records[k]
+        print("Add     ", rstr(n))
+        radd(n)
 
 def read_db(filename):
     with open(filename, 'r') as f:
@@ -326,14 +419,21 @@ def cmd_sync_dnsmasq(args):
     db = read_db(args.db)
     sync_dnsmasq(db)
 
+def cmd_public_records(args):
+    db = read_db(args.db)
+    for r in public_records(db):
+        print("{TYPE:4} {NAME:10} {TARGET}".format(*r))
+
+def cmd_sync_linode(args):
+    db = read_db(args.db)
+    sync_linode(public_records(db))
+
 def cmd_create_all(args):
     db = read_db(args.db)
     need_habhub_host()
     sync_dnsmasq(db)
     conn = libvirt.open(LIBVIRT_URI)
     create_all(db, conn)
-
-
 
 
 def main():
@@ -395,6 +495,12 @@ def main():
 
     sync_dnsmasq = subparsers.add_parser("sync-dnsmasq", help='sync and HUP dnsmasq on this box')
     sync_dnsmasq.set_defaults(func=cmd_sync_dnsmasq)
+
+    public_records = subparsers.add_parser("public-records", help='print public DNS records')
+    public_records.set_defaults(func=cmd_public_records)
+
+    sync_linode = subparsers.add_parser("sync-linode", help='sync linode public DNS')
+    sync_linode.set_defaults(func=cmd_sync_linode)
 
     create_all = subparsers.add_parser("create-all", help="create VMs that should exist")
     create_all.set_defaults(func=cmd_create_all)
