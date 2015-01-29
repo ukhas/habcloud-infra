@@ -33,6 +33,16 @@ HOST_NETWORKS = {
     }
 }
 HOST_CPUS = {"ceto": 4, "phorcys": 8}
+HOST_IPS = {
+    "ceto": {
+        "public": ["164.39.7.113", "2a02:710:1000:700::71"],
+        "pubpriv": ["10.0.1.113"]
+    },
+    "phorcys": {
+        "public": ["164.39.7.114", "2a02:710:1000:700::72"],
+        "pubpriv": ["10.0.2.114"]
+    }
+}
 VM_BASE_SIZE = {"amt": 2, "unit": "G"}
 
 
@@ -138,6 +148,20 @@ def dnsmasq_hosts(db):
                 h = cfg["vm_name"] + s
                 add(intf["ip"], h)
                 add(intf["ip6"], h)
+
+    for hostname, nets in HOST_IPS.items():
+        for ip_type, addresses in nets.items():
+            # note lack of .vm.
+            if intf["ip_type"] in {"private", "pubpriv"}:
+                suffixes = ['.habhub.org', '', '.private.habhub.org']
+            elif intf["ip_type"] == "public":
+                suffixes = ['.habhub.org', '', '.public.habhub.org']
+            else:
+                assert False
+
+            for addr in addresses:
+                for s in suffixes:
+                    add(addr, hostname + s)
 
     fst = lambda (a, b): a
     ips = sorted(ips.items(), key=fst)
