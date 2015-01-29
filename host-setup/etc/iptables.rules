@@ -45,6 +45,10 @@ COMMIT
 -A INPUT -p tcp --dport 53 -m state --state NEW -m physdev ! --physdev-in eth0 -j ACCEPT
 -A INPUT -p udp --dport 53 -m state --state NEW -m physdev ! --physdev-in eth0 -j ACCEPT
 
+## Allow NTP from the other hypervisor
+-A INPUT -p udp --dport 123 -m physdev --physdev-in bond0 -s ceto.private.habhub.org    -j ACCEPT
+-A INPUT -p udp --dport 123 -m physdev --physdev-in bond0 -s phorcys.private.habhub.org -j ACCEPT
+
 ## This box is a DHCP server. Note that EBTables keeps this away from eth0
 -A INPUT -m udp -p udp --dport 67 -j ACCEPT
 
