@@ -152,9 +152,9 @@ def dnsmasq_hosts(db):
     for hostname, nets in HOST_IPS.items():
         for ip_type, addresses in nets.items():
             # note lack of .vm.
-            if intf["ip_type"] in {"private", "pubpriv"}:
+            if ip_type in {"private", "pubpriv"}:
                 suffixes = ['.habhub.org', '', '.private.habhub.org']
-            elif intf["ip_type"] == "public":
+            elif ip_type == "public":
                 suffixes = ['.habhub.org', '', '.public.habhub.org']
             else:
                 assert False
