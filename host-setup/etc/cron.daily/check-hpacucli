@@ -22,7 +22,9 @@ deletes = [
     "Unique Identifier",
     "Logical Drive Label",
     "Serial Number",
-    "Temperature"
+    "Temperature",
+    "Model",
+    "Firmware Revision"
 ]
 
 lines = [l for l in lines if not any(d in l for d in deletes)]
@@ -110,8 +112,6 @@ Smart Array P400 in Slot 1
          Interface Type: SAS
          Size: 146 GB
          Rotational Speed: 10000
-         Firmware Revision: HPDF
-         Model: HP      DG146BB976      
          PHY Count: 2
          PHY Transfer Rate: Unknown, Unknown
 
@@ -124,8 +124,6 @@ Smart Array P400 in Slot 1
          Interface Type: SAS
          Size: 146 GB
          Rotational Speed: 10000
-         Firmware Revision: HPDF
-         Model: HP      DG146BB976      
          PHY Count: 2
          PHY Transfer Rate: Unknown, Unknown
 
@@ -138,8 +136,6 @@ Smart Array P400 in Slot 1
          Interface Type: SAS
          Size: 146 GB
          Rotational Speed: 10000
-         Firmware Revision: HPDF
-         Model: HP      DG146BB976      
          PHY Count: 2
          PHY Transfer Rate: Unknown, 3.0Gbps
 
@@ -152,8 +148,6 @@ Smart Array P400 in Slot 1
          Interface Type: SAS
          Size: 146 GB
          Rotational Speed: 10000
-         Firmware Revision: HPDF
-         Model: HP      DG146BB976      
          PHY Count: 2
          PHY Transfer Rate: Unknown, Unknown
 
@@ -166,8 +160,6 @@ Smart Array P400 in Slot 1
          Interface Type: SAS
          Size: 146 GB
          Rotational Speed: 10000
-         Firmware Revision: HPDF
-         Model: HP      DG146BB976      
          PHY Count: 2
          PHY Transfer Rate: Unknown, Unknown
 
@@ -180,8 +172,6 @@ Smart Array P400 in Slot 1
          Interface Type: SAS
          Size: 146 GB
          Rotational Speed: 10000
-         Firmware Revision: HPDF
-         Model: HP      DG146BB976      
          PHY Count: 2
          PHY Transfer Rate: Unknown, Unknown
 
@@ -194,8 +184,6 @@ Smart Array P400 in Slot 1
          Interface Type: SAS
          Size: 146 GB
          Rotational Speed: 10000
-         Firmware Revision: HPDF
-         Model: HP      DG146BB976      
          PHY Count: 2
          PHY Transfer Rate: 3.0Gbps, Unknown
 
@@ -208,8 +196,6 @@ Smart Array P400 in Slot 1
          Interface Type: SAS
          Size: 146 GB
          Rotational Speed: 10000
-         Firmware Revision: HPDF
-         Model: HP      DG146BB976      
          PHY Count: 2
          PHY Transfer Rate: Unknown, Unknown
 
