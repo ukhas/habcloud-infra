@@ -8,7 +8,6 @@ import os.path
 import signal
 import copy
 import argparse
-import tempfile
 import subprocess
 from platform import node as hostname
 from contextlib import contextmanager
@@ -22,12 +21,14 @@ AVAILABLE = {
 }
 HOST_NETWORKS = {
     'ceto': {
-        'public':  ('br0', '52:54:01:00:00:{0:02X}', '164.39.7.{0:d}', "2a02:710:1000:700:5054:1ff:fe00:{0:02x}"),
+        'public':  ('br0', '52:54:01:00:00:{0:02X}', '164.39.7.{0:d}',
+                    '2a02:710:1000:700:5054:1ff:fe00:{0:02x}'),
         'pubpriv': ('br1', '52:54:01:01:01:{0:02X}', '10.0.1.{0:d}',   None),
         'private': ('br1', '52:54:01:01:03:{0:02X}', '10.0.3.{0:d}',   None)
     },
     'phorcys': {
-        'public':  ('br0', '52:54:02:00:00:{0:02X}', '164.39.7.{0:d}', "2a02:710:1000:700:5054:2ff:fe00:{0:02x}"),
+        'public':  ('br0', '52:54:02:00:00:{0:02X}', '164.39.7.{0:d}',
+                    '2a02:710:1000:700:5054:2ff:fe00:{0:02x}'),
         'pubpriv': ('br1', '52:54:02:01:02:{0:02X}', '10.0.2.{0:d}',   None),
         'private': ('br1', '52:54:02:01:04:{0:02X}', '10.0.4.{0:d}',   None)
     }
@@ -50,7 +51,8 @@ def jinja_env():
     import jinja2
     jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
     jinja_loader = jinja2.FileSystemLoader(jinja_dir)
-    return jinja2.Environment(loader=jinja_loader, undefined=jinja2.StrictUndefined)
+    return jinja2.Environment(loader=jinja_loader,
+                              undefined=jinja2.StrictUndefined)
 
 
 def available_addr_ids(db):
@@ -62,11 +64,12 @@ def available_addr_ids(db):
 
     return networks
 
+
 def allocate(db, host, vm_name, ram, vcpus, disk, network):
     if vm_name in db:
-        raise ValueError("{0} already in database".format(vm_name))
+        raise ValueError("{} already in database".format(vm_name))
     if vcpus > HOST_CPUS[host]:
-        raise ValueError("{0} only has {1} cores".format(host, HOST_CPUS[host]))
+        raise ValueError("{} only has {} cores".format(host, HOST_CPUS[host]))
 
     networks = available_addr_ids(db)
     available = networks[network]
@@ -84,19 +87,20 @@ def allocate(db, host, vm_name, ram, vcpus, disk, network):
         "ip": (network, addr_id)
     }
 
+
 def expand_config(vm_name, vm):
     network, addr_id = vm["ip"]
     host_network_config = HOST_NETWORKS[vm["host"]]
 
     def interface(dev, ip_type):
-        bridge, mac_template, ip_template, ip6_template = host_network_config[ip_type]
+        bridge, mac_tpl, ip_tpl, ip6_tpl = host_network_config[ip_type]
         return {
             "dev": dev,
             "bridge": bridge,
             "ip_type": ip_type,
-            "mac": mac_template.format(addr_id),
-            "ip": ip_template.format(addr_id),
-            "ip6": ip6_template.format(addr_id) if ip6_template else None
+            "mac": mac_tpl.format(addr_id),
+            "ip": ip_tpl.format(addr_id),
+            "ip6": ip6_tpl.format(addr_id) if ip6_tpl else None
         }
 
     if network == "public":
@@ -120,13 +124,16 @@ def domain_xml(vm):
     template = jinja_env().get_template('domain.xml')
     return template.render(**vm)
 
+
 def dnsmasq_dhcp(db, host):
     vms = [expand_config(name, cfg) for name, cfg in db.items()]
     template = jinja_env().get_template('dnsmasq-dhcp')
     return template.render(host=host, vms=vms)
 
+
 def dnsmasq_hosts(db):
     ips = {}
+
     def add(ip, host):
         if ip is None:
             return
@@ -149,7 +156,7 @@ def dnsmasq_hosts(db):
                 add(intf["ip"], h)
                 add(intf["ip6"], h)
 
-    for hostname, nets in HOST_IPS.items():
+    for name, nets in HOST_IPS.items():
         for ip_type, addresses in nets.items():
             # note lack of .vm.
             if ip_type in {"private", "pubpriv"}:
@@ -161,12 +168,12 @@ def dnsmasq_hosts(db):
 
             for addr in addresses:
                 for s in suffixes:
-                    add(addr, hostname + s)
+                    add(addr, name + s)
 
-    fst = lambda (a, b): a
+    fst = lambda x: x[0]
     ips = sorted(ips.items(), key=fst)
 
-    line = lambda (ip, hosts): " ".join([ip] + sorted(hosts))
+    line = lambda ip_hosts: " ".join([ip_hosts[0]] + sorted(ip_hosts[1]))
     lines = list(map(line, ips))
     return "\n".join(lines) + "\n"
 
@@ -175,13 +182,16 @@ def check_call(command):
     print(*command)
     subprocess.check_call(command)
 
+
 def need_root():
     if os.getuid() != 0:
         raise OSError("Need root")
 
+
 def need_habhub_host():
     if hostname() not in {"ceto", "phorcys"}:
-        raise ValueError("Need to be run on ceto or phorcys", host)
+        raise ValueError("Need to be run on ceto or phorcys", hostname())
+
 
 def compare_disk_size(a, b):
     def normalise(x):
@@ -193,9 +203,11 @@ def compare_disk_size(a, b):
 
     return normalise(a) - normalise(b)
 
-def listAllDomains(conn):
+
+def list_all_domains(conn):
     # wtf.
-    return [conn.lookupByID(x).name() for x in conn.listDomainsID()] + conn.listDefinedDomains()
+    return ([conn.lookupByID(x).name() for x in conn.listDomainsID()]
+            + conn.listDefinedDomains())
 
 
 def create(db, conn, vm_name):
@@ -207,7 +219,7 @@ def create(db, conn, vm_name):
 
     if host != vm["host"]:
         raise Exception("Must be run on {0}".format(vm["host"]))
-    if vm_name in listAllDomains(conn):
+    if vm_name in list_all_domains(conn):
         raise KeyError(vm_name + " already exists")
 
     assert host in {"ceto", "phorcys"}
@@ -247,8 +259,9 @@ def create(db, conn, vm_name):
     domain.setAutostart(True)
     domain.create()
 
+
 def create_all(db, conn):
-    existing = set(listAllDomains(conn))
+    existing = set(list_all_domains(conn))
     host = hostname()
     desired = set(vm_name for vm_name, vm in db.items() if vm["host"] == host)
 
@@ -263,6 +276,7 @@ def create_all(db, conn):
     print("To create:", *sorted(to_create))
     for vm_name in to_create:
         create(db, conn, vm_name)
+
 
 def sync_dnsmasq(db):
     need_habhub_host()
@@ -292,13 +306,15 @@ def public_record_to_string(type, name, target):
         target = target[:limit] + "..."
     return "{:4} {:30} {}".format(type, name, target)
 
+
 def public_records(db):
     if hostname() == "support":
         with open("/etc/exim4/dkim.public.key") as f:
             dkim_public = f.read()
     else:
         dkim_public = subprocess.check_output(
-            ["ssh", "support.vm.habhub.org", "cat", "/etc/exim4/dkim.public.key"]
+            ["ssh", "support.vm.habhub.org",
+             "cat", "/etc/exim4/dkim.public.key"]
         )
 
     dkim_public = dkim_public.splitlines()
@@ -306,7 +322,7 @@ def public_records(db):
     assert dkim_public[-1] == "-----END PUBLIC KEY-----"
     dkim_public = "".join(dkim_public[1:-1])
 
-    spf_record  = "v=spf1 a:support.vm.habhub.org -all"
+    spf_record = "v=spf1 a:support.vm.habhub.org -all"
     dkim_record = "v=DKIM1; p={}; t=s".format(dkim_public)
 
     for name, cfg in db.items():
@@ -319,6 +335,7 @@ def public_records(db):
             if intf["ip_type"] == "public":
                 yield "A",    cfg["vm_name"], intf["ip"]
                 yield "AAAA", cfg["vm_name"], intf["ip6"]
+
 
 def sync_linode(records):
     # lazy import linode api so that we can run other things
@@ -339,14 +356,19 @@ def sync_linode(records):
             Name=name,
             Target=target
         )
+
     def rdelete(res):
         linode.domain_resource_delete(
             DomainID=vm_habhub_org,
             ResourceID=res["RESOURCEID"]
         )
-    def rlist(): return linode.domain_resource_list(domainid=vm_habhub_org)
 
-    def tuple_of_res(r): return (res["TYPE"].upper(), res["NAME"], res["TARGET"])
+    def rlist():
+        return linode.domain_resource_list(domainid=vm_habhub_org)
+
+    def tuple_of_res(r):
+        return (res["TYPE"].upper(), res["NAME"], res["TARGET"])
+
     rstr = public_record_to_string
 
     desired = set(records)
@@ -368,16 +390,17 @@ def sync_linode(records):
 def read_db(filename):
     with open(filename, 'r') as f:
         db = yaml.safe_load(f)
-        if db == None:
+        if db is None:
             return {}
         else:
             return db
+
 
 @contextmanager
 def change_db(filename):
     with open(filename, 'a+') as f:
         db = yaml.safe_load(f)
-        if db == None:
+        if db is None:
             db = {}
         yield db
         f.truncate(0)
@@ -387,9 +410,10 @@ def change_db(filename):
 def cmd_allocate(args):
     with change_db(args.db) as db:
         allocate(db=db, host=args.host, vm_name=args.vm_name, ram=args.ram,
-                        vcpus=args.vcpus, disk=args.disk, network=args.network)
+                 vcpus=args.vcpus, disk=args.disk, network=args.network)
         cfg = expand_config(args.vm_name, db[args.vm_name])
     yaml.safe_dump(cfg, sys.stdout)
+
 
 def cmd_list(args):
     table = []
@@ -404,23 +428,28 @@ def cmd_list(args):
     for row in table:
         print(*row, sep='\t')
 
+
 def cmd_show(args):
     db = read_db(args.db)
     vm = expand_config(args.vm_name, db[args.vm_name])
     yaml.safe_dump(vm, sys.stdout)
+
 
 def cmd_xml(args):
     db = read_db(args.db)
     vm = expand_config(args.vm_name, db[args.vm_name])
     print(domain_xml(vm))
 
+
 def cmd_dnsmasq_dhcp(args):
     db = read_db(args.db)
     print(dnsmasq_dhcp(db, args.host), end='')
 
+
 def cmd_dnsmasq_hosts(args):
     db = read_db(args.db)
     print(dnsmasq_hosts(db), end='')
+
 
 def cmd_create(args):
     import libvirt
@@ -429,18 +458,22 @@ def cmd_create(args):
     conn = libvirt.open(LIBVIRT_URI)
     create(db, conn, args.vm_name)
 
+
 def cmd_sync_dnsmasq(args):
     db = read_db(args.db)
     sync_dnsmasq(db)
+
 
 def cmd_public_records(args):
     db = read_db(args.db)
     for r in public_records(db):
         print(public_record_to_string(*r))
 
+
 def cmd_sync_linode(args):
     db = read_db(args.db)
     sync_linode(public_records(db))
+
 
 def cmd_create_all(args):
     import libvirt
@@ -462,14 +495,17 @@ def main():
         else:
             raise ValueError(s)
 
-    def ram(s): return parse_amount_units(s, {"GiB", "MiB"})
+    def ram(s):
+        return parse_amount_units(s, {"GiB", "MiB"})
+
     def vcpus(s):
         n = int(s)
         if n < 0:
             raise ValueError(n)
         return n
-    def disk(s): return parse_amount_units(s, {"G", "M"})
 
+    def disk(s):
+        return parse_amount_units(s, {"G", "M"})
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--db", help='VMs database', default="./vms.yaml")
@@ -497,27 +533,35 @@ def main():
     xml.set_defaults(func=cmd_xml)
     xml.add_argument("vm_name", help='guest hostname')
 
-    dnsmasq_dhcp = subparsers.add_parser("dnsmasq-dhcp", help='dnsmasq dhcp-hosts file')
+    dnsmasq_dhcp = subparsers.add_parser("dnsmasq-dhcp",
+                                         help='dnsmasq dhcp-hosts file')
     dnsmasq_dhcp.set_defaults(func=cmd_dnsmasq_dhcp)
-    dnsmasq_dhcp.add_argument("host", help='VM host', choices=HOST_NETWORKS.keys())
+    dnsmasq_dhcp.add_argument("host", help='VM host',
+                              choices=HOST_NETWORKS.keys())
 
-    dnsmasq_hosts = subparsers.add_parser("dnsmasq-hosts", help='dnsmasq hosts file')
+    dnsmasq_hosts = subparsers.add_parser("dnsmasq-hosts",
+                                          help='dnsmasq hosts file')
     dnsmasq_hosts.set_defaults(func=cmd_dnsmasq_hosts)
 
-    create = subparsers.add_parser("create", help='create an allocate VM on this box')
+    create = subparsers.add_parser("create",
+                                   help='create an allocate VM on this box')
     create.set_defaults(func=cmd_create)
     create.add_argument("vm_name", help='guest hostname')
 
-    sync_dnsmasq = subparsers.add_parser("sync-dnsmasq", help='sync and HUP dnsmasq on this box')
+    sync_dnsmasq = subparsers.add_parser(
+        "sync-dnsmasq", help='sync and HUP dnsmasq on this box')
     sync_dnsmasq.set_defaults(func=cmd_sync_dnsmasq)
 
-    public_records = subparsers.add_parser("public-records", help='print public DNS records')
+    public_records = subparsers.add_parser(
+        "public-records", help='print public DNS records')
     public_records.set_defaults(func=cmd_public_records)
 
-    sync_linode = subparsers.add_parser("sync-linode", help='sync linode public DNS')
+    sync_linode = subparsers.add_parser(
+        "sync-linode", help='sync linode public DNS')
     sync_linode.set_defaults(func=cmd_sync_linode)
 
-    create_all = subparsers.add_parser("create-all", help="create VMs that should exist")
+    create_all = subparsers.add_parser("create-all",
+                                       help="create VMs that should exist")
     create_all.set_defaults(func=cmd_create_all)
 
     args = parser.parse_args()
