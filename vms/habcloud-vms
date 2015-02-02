@@ -20,6 +20,15 @@ try:
 except ImportError:
     JINJA2 = False
 
+try:
+    import boto.s3.connection
+    import boto.s3.lifecycle
+    import boto.iam.connection
+    import boto.exception
+    BOTO = True
+except ImportError:
+    BOTO = False
+
 LIBVIRT_URI = "qemu:///system"
 AVAILABLE = {
     'public': set(range(115, 124 + 1)),
@@ -393,6 +402,111 @@ def sync_linode(records):
         radd(*tup)
 
 
+def s3_connect():
+    """Try to connect to S3, returning an S3Connection or None"""
+    try:
+        conn = boto.s3.connection.S3Connection()
+    except boto.exception.NoAuthHandlerFound as e:
+        print("Could not authenticate to S3, please check credentials")
+        print(e)
+        return False
+    except boto.exception.AWSConnectionError as e:
+        print("Could not connect to AWS")
+        print(e)
+        return False
+    else:
+        return conn
+
+
+def create_s3_bucket(conn, name):
+    """
+    Attempt to create a bucket on S3 with the given name, and set its
+    lifecycle configuration to "archive to Glacier immediately, delete
+    after one year".
+
+    Returns True on success, False on failure.
+    """
+    try:
+        bucket = conn.create_bucket(name, location='eu-west-1')
+    except boto.exception.BotoServerError as e:
+        print("Error creating S3 bucket:", e)
+        return False
+
+    transition = boto.s3.lifecycle.Transition(days=0, storage_class='GLACIER')
+    expiration = boto.s3.lifecycle.Expiration(days=365)
+    rule = boto.s3.lifecycle.Rule(
+        status='Enabled', transition=transition, expiration=expiration)
+    lifecycle = boto.s3.lifecycle.Lifecycle()
+    lifecycle.append(rule)
+    try:
+        bucket.configure_lifecycle(lifecycle)
+    except boto.exception.BotoServerError as e:
+        print("Error setting bucket lifecycle:", e)
+        return False
+
+    return True
+
+
+def list_s3_buckets(conn):
+    """
+    Fetch a list of all bucket names.
+    """
+    return [b.name for b in conn.get_all_buckets()]
+
+
+def iam_connect():
+    """Try to connect to IAM, returns an IAMConnection or None"""
+    try:
+        conn = boto.iam.connection.IAMConnection()
+    except boto.exception.NoAuthHandlerFound as e:
+        print("Could not authenticate to S3, please check credentials")
+        print(e)
+        return None
+    except boto.exception.AWSConnectionError as e:
+        print("Could not connect to AWS")
+        print(e)
+        return None
+    else:
+        return conn
+
+
+def create_iam_user(conn, name):
+    """
+    Attempt to create an IAM user with the given name, and then add it to the
+    habcloud-backups group so it can putObject to the S3 buckets.
+
+    Returns (access_key, secret_key) on success, False on failure.
+    """
+    try:
+        conn.create_user(name)
+        access_key = conn.create_access_key(name)
+        conn.add_user_to_group("habcloud-backups", name)
+    except boto.exception.BotoServerError as e:
+        print("Error creating user:", e)
+        return False
+
+    try:
+        details = (access_key.get('create_access_key_response')
+                             .get('create_access_key_result')
+                             .get('access_key'))
+        access_key = details['access_key_id']
+        secret_key = details['secret_access_key']
+    except TypeError:
+        print("Error retrieving secret key for", name)
+        return False
+
+    return (access_key, secret_key)
+
+
+def list_iam_users(conn):
+    rv = conn.get_all_users()
+    users = (rv.get('list_users_response', {})
+               .get('list_users_result', {})
+               .get('users'))
+    return [user['user_name'] for user in users
+            if user['user_name'].endswith('vm.habhub.org')]
+
+
 def read_db(filename):
     with open(filename, 'r') as f:
         db = yaml.safe_load(f)
@@ -490,6 +604,47 @@ def cmd_create_all(args):
     create_all(db, conn)
 
 
+def cmd_list_backups(args):
+    if not BOTO:
+        print("Could not import `boto`, cannot continue.")
+        return
+
+    c = s3_connect()
+    if c:
+        print("S3 buckets:", list_s3_buckets(c))
+    c = iam_connect()
+    if c:
+        print("IAM users:", list_iam_users(c))
+
+
+def cmd_create_backup(args):
+    if not BOTO:
+        print("Could not import `boto`, cannot continue.")
+        return
+
+    print("Creating backup bucket/user '{}'".format(args.name))
+    c = s3_connect()
+    if not c:
+        return
+    create_s3_bucket(c, args.name)
+    c = iam_connect()
+    if not c:
+        return
+    result = create_iam_user(c, args.name)
+    if not result:
+        return
+
+    print("Bucket and user created, access details:")
+    print("access key: {}\nsecret key: {}".format(*result))
+
+    if args.pillar:
+        name_underscored = args.name.replace('.', '_')
+        with open("{}.sls".format(name_underscored), "w") as f:
+            f.write(yaml.safe_dump({"backups": {name_underscored: {
+                "access_key": result[0], "secret_key": result[1]}}}))
+            print("Created Pillar file {}.sls".format(name_underscored))
+
+
 def main():
     def parse_amount_units(s, allowed_units):
         for u in allowed_units:
@@ -548,6 +703,18 @@ def main():
     dnsmasq_hosts = subparsers.add_parser("dnsmasq-hosts",
                                           help='dnsmasq hosts file')
     dnsmasq_hosts.set_defaults(func=cmd_dnsmasq_hosts)
+
+    list_backups = subparsers.add_parser(
+        "list-backups", help="list AWS backup buckets and users")
+    list_backups.set_defaults(func=cmd_list_backups)
+
+    create_backup = subparsers.add_parser(
+        "create-backup", help="create new backup user and bucket")
+    create_backup.set_defaults(func=cmd_create_backup)
+    create_backup.add_argument("name", help="VM hostname")
+    create_backup.add_argument(
+        "--pillar", action="store_true",
+        help="Create a Pillar file with new credentials in cwd")
 
     create = subparsers.add_parser("create",
                                    help='create an allocate VM on this box')
