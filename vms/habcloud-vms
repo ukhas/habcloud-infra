@@ -409,11 +409,11 @@ def s3_connect():
     except boto.exception.NoAuthHandlerFound as e:
         print("Could not authenticate to S3, please check credentials")
         print(e)
-        return False
+        return None
     except boto.exception.AWSConnectionError as e:
         print("Could not connect to AWS")
         print(e)
-        return False
+        return None
     else:
         return conn
 
