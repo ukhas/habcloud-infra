@@ -14,6 +14,12 @@ from contextlib import contextmanager
 
 import yaml
 
+try:
+    import jinja2
+    JINJA2 = True
+except ImportError:
+    JINJA2 = False
+
 LIBVIRT_URI = "qemu:///system"
 AVAILABLE = {
     'public': set(range(115, 124 + 1)),
@@ -48,7 +54,6 @@ VM_BASE_SIZE = {"amt": 2, "unit": "G"}
 
 
 def jinja_env():
-    import jinja2
     jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
     jinja_loader = jinja2.FileSystemLoader(jinja_dir)
     return jinja2.Environment(loader=jinja_loader,
@@ -212,7 +217,8 @@ def list_all_domains(conn):
 
 def create(db, conn, vm_name):
     need_root()
-    import jinja2  # will need it below
+    if not JINJA2:
+        raise RuntimeError("Could not import jinja2, so cannot create VMs")
 
     vm = expand_config(vm_name, db[vm_name])
     host = hostname()
