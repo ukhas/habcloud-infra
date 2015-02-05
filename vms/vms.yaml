@@ -27,7 +27,7 @@ scratch:
   host: phorcys
   ip: [public, 124]
   ram: {amt: 1, unit: GiB}
-  vcpus: 1
+  vcpus: 2
 support:
   disk: {amt: 5, unit: G}
   host: ceto
