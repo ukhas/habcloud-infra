@@ -10,6 +10,12 @@ habhub:
   ip: [public, 115]
   ram: {amt: 2, unit: GiB}
   vcpus: 2
+monitoring:
+  disk: {amt: 12, unit: G}
+  host: phorcys
+  ip: [private, 4]
+  ram: {amt: 2, unit: GiB}
+  vcpus: 4
 predictor:
   disk: {amt: 20, unit: G}
   host: phorcys
