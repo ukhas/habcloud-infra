@@ -330,7 +330,7 @@ def public_records(db):
         dkim_public = subprocess.check_output(
             ["ssh", "support.vm.habhub.org",
              "cat", "/etc/exim4/dkim.public.key"]
-        )
+        ).decode("ascii")
 
     dkim_public = dkim_public.splitlines()
     assert dkim_public[0] == "-----BEGIN PUBLIC KEY-----"
@@ -355,7 +355,13 @@ def public_records(db):
 def sync_linode(records):
     # lazy import linode api so that we can run other things
     from linode.api import Api
-    linode = Api(input("api key"))
+
+    try:
+        key = raw_input("api key> ")
+    except NameError:
+        key = input("api key> ")
+
+    linode = Api(key)
 
     for d in linode.domain_list():
         if d["DOMAIN"] == "vm.habhub.org":
