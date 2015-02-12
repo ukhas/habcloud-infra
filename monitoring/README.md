@@ -16,6 +16,7 @@ we might consider.
     * Predictions run
     * Response time for predictions/habitat/etc
     * Cache hits/misses
+    * Etc
  * Pretty dashboards to display system status and drill down into metrics
  * Don't spend too much CPU or RAM on monitoring
 
@@ -327,7 +328,7 @@ of them for a little while first.
 
 ## Architecture
 
-On the `monitoring` VM:
+On the `monitoring` VM (tbc: just one VM? or split it up?)
 
  * Errors
    * PostgreSQL
@@ -338,37 +339,37 @@ On the `monitoring` VM:
  * Logs
    * syslog-ng
    * logstash
-   * elasticsearch
+   * ElasticSearch
    * kibana
    * nginx
 
  * Analytics
    * nginx
-   * php
-   * mysql
+   * PHP
+   * MySQL
    * piwik
 
  * Metrics & Alerting
-   * riemann
-   * java
-   * influxdb
-   * grafana
-   * elasticsearch
+   * Riemann
+   * Java
+   * InfluxDB
+   * Grafana
+   * ElasticSearch (stores Grafana dashboards)
    * nginx
 
 On every VM:
 
  * Errors
-   * raven (sentry python client)
-   * other sentry clients
+   * applications use the sentry client (e.g. raven for python)
  * Logs
-   * syslog (comes with the servers anyway)
-   * applications and services logging to syslog
+   * syslog (comes with the servers anyway) forwards to central syslog-ng
+   * applications and services all logging to syslog (no log files, or 
+     regularly purged log files)
  * Analytics
    * Javascript on every page we want to monitor
  * Metrics & Alerting
-   * applications send metrics directly to riemann
-   * diamond sends system stats to riemann
+   * applications send metrics directly to Riemann
+   * diamond sends system stats to Riemann
 
 ## Appendix: Interesting Links
 
@@ -379,7 +380,7 @@ List of a lot of tools:
 https://github.com/benhaines/open-source-management-systems
 
 Someone else had similar problems, started writing their own collection and 
-management and etc:
+management and etc and deciding neither Riemann nor Heka were for them:
 
  1. https://gist.github.com/ceejbot/032e545a9f2aebee7cc6
  2. https://gist.github.com/ceejbot/eb5cb1c7d4f7330175e6
