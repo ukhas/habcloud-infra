@@ -224,7 +224,7 @@ Logstash is written in JRuby so requires the JVM.
 
 Not clear right now if we'd need Logstash at all if we ran Heka. Looks like no.
 
-### (syslog-ng)[https://github.com/balabit/syslog-ng]: log collection
+### [syslog-ng](https://github.com/balabit/syslog-ng): log collection
 
 Instead of having apps write to log files, we could send to syslog-ng. Can 
 output to logstash and riemann. Can replace local syslog or local host syslogs 
