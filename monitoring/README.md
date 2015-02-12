@@ -288,15 +288,18 @@ We probably then want to aggressively remove log files from disk on the hosts.
  * We could run Riemann. Apps send metrics to Riemann directly, it does 
    analysis and alerting and sends to InfluxDB for long term storage. We just 
    run one Riemann instance, so JVM requirement isn't too bad. We get advanced 
-   monitoring/alerting capability. We don't get statsd anywhere.
+   monitoring/alerting capability. We don't get statsd anywhere. We have to 
+   write our alerts and processing in Clojure in one central config file.
 
  * We could run Heka. We'd run it on every host, plus probably one central 
    instance. On each host it runs statsd for application metrics, some 
    applications could report to it directly, and it can do basic alerting. It 
    then outputs to InfluxDB. We have to run it on every host (but that's not 
-   too onerous). We get less flexible alerting. It can read log files for us 
-   and send them to ElasticSearch/LogStash. It's not clear if Heka and Riemann 
-   can usefully coexist, though.
+   too onerous as it's a statically linked binary). We get less flexible 
+   alerting. It can read log files for us and send them to ElasticSearch. 
+   Configuration is a somewhat simpler format and probably per-host (though 
+   it's not clear how this would interact with monitoring that hosts are 
+   actually running). It's not clear if Heka and Riemann can usefully coexist.
 
 Alerting on application or service downtime is doable in Riemann and probably 
 in Heka based on the absence of heartbeat or other regular metrics.
