@@ -266,13 +266,29 @@ metrics and sending them to Riemann or Heka or something else. CollectD is a
 reasonable alternative and would give us a statsd server, though. These fulfill 
 the first part of being able to "alert on abnormal system state".
 
-We then have a few choices:
+### Logging Choices
+
+No matter what, we'll probably end up with logs being stored in ElasticSearch 
+and visualised with Kibana. How they get there is the choice.
+
+ * logstash-forwarder on each host, to a central logstash server
+ * heka can read log files and write to elasticsearch directly (apparently more 
+   performant too)
+ * syslog on each host sends logs to syslog-ng which sends to logstash. can't 
+   deal with log files, only syslog entries, though. might be OK.
+ * syslog-ng (or perhaps others) can send logs to riemann which can write to 
+   elasticsearch. This seems an unusual approach though. Riemann seems more 
+   designed to input the events that would otherwise generate a line in a log 
+   file.
+
+We probably then want to aggressively remove log files from disk on the hosts. 
+
+### Metrics Choices
 
  * We could run Riemann. Apps send metrics to Riemann directly, it does 
    analysis and alerting and sends to InfluxDB for long term storage. We just 
    run one Riemann instance, so JVM requirement isn't too bad. We get advanced 
-   monitoring/alerting capability. We don't get statsd anywhere. It's not clear 
-   what we'd do about log files.
+   monitoring/alerting capability. We don't get statsd anywhere.
 
  * We could run Heka. We'd run it on every host, plus probably one central 
    instance. On each host it runs statsd for application metrics, some 
@@ -281,11 +297,6 @@ We then have a few choices:
    too onerous). We get less flexible alerting. It can read log files for us 
    and send them to ElasticSearch/LogStash. It's not clear if Heka and Riemann 
    can usefully coexist, though.
-
- * We could run Logstash. Ideally we don't run this on each host, so we'd have 
-   logstash-forwarder on each host sending events into Logstash. It's not clear 
-   what can replace this as an option - perhaps Heka? It can certainly read log 
-   files and send them places, but perhaps not as nice places as Logstash.
 
 Alerting on application or service downtime is doable in Riemann and probably 
 in Heka based on the absence of heartbeat or other regular metrics.
