@@ -10,6 +10,7 @@ we might consider.
     * Application errors
     * Processes or hosts go down
     * Abnormal load / disk usage / RAM usage
+    * Alert to email and IRC
  * Keep log files somewhere easy to store and analyse and rotate
  * Record interesting statistics
     * Hits on websites
@@ -133,6 +134,8 @@ Logstash. Performs some metric processing and alerting, replacing Riemann.
 Does not store metrics, forwards to something like InfluxDB or Graphite or 
 higher-level Heka instances.
 
+Can output directly to IRC which is nice.
+
 Includes a reasonably pretty dashboard but we probably would not generally be 
 using it.
 
@@ -171,6 +174,13 @@ Advanced/powerful features when it comes to processing streams of events to
 generate rates or averages, alerting with rollup and on special conditions etc.
 
 Does not store metrics, forwards to something like InfluxDB or Graphite or ES.
+
+Cannot output to IRC built-in but 
+"[easily](http://logs.lazybot.org/irc.freenode.net/%23riemann/2014-05-22.txt)" 
+extended to do so - just write some Clojure that sends messages to IRC... It 
+might be easier to run an IRC bot that takes input over TDP/UDP/HTTP etc (e.g. 
+Hubut) and might be able to serve other purposes too, then have Riemann send 
+alerts to that.
 
 Has a basic dashboard (not built in but available as a Ruby gem) which is an 
 interesting way to quickly see the current-state (no history) of metrics being 
