@@ -242,9 +242,11 @@ View log entries and charts/metrics derived from them. Apparently very nice.
 
 ### [Piwik](http://piwik.org/): Website analytics
 
-Somewhat separate from everything else, Piwik analyses log files (and perhaps 
-has a little javascript widget too) that does web analytics. A sort of 
-self-hosted Google Analytics service.
+Piwik is a website analytics tool. Typically it uses a small piece of 
+Javascript embedded on the page though it can also parse log files. It provides 
+views on website usage with a nice HTML interface.
+
+Piwik requires MySQL (does not support PostgreSQL) and requires PHP 5.4.
 
 ## Proposal / Options
 
@@ -258,8 +260,11 @@ requirement.
 We should run InfluxDB+Grafana for storing and displaying interesting metrics. 
 This meets our "visualise interesting stats in a pretty way" requirement.
 
-We should run Piwik on our web logs, possibly fed from the 
-ElasticSearch/LogStash setup (or perhaps fed directly, not sure).
+We should run Piwik. Probably best would be to put the Javascript tracker on 
+most websites we care about (especially the predictor, the wiki and the 
+tracker). We could have it analyse log files too but it's not immediately clear 
+how we'd get the log files to it. It looks like it only needs to read them once 
+to add them to its database.
 
 Running Diamond on each host probably makes the most sense, collecting system 
 metrics and sending them to Riemann or Heka or something else. CollectD is a 
@@ -274,14 +279,22 @@ and visualised with Kibana. How they get there is the choice.
  * logstash-forwarder on each host, to a central logstash server
  * heka can read log files and write to elasticsearch directly (apparently more 
    performant too)
- * syslog on each host sends logs to syslog-ng which sends to logstash. can't 
-   deal with log files, only syslog entries, though. might be OK.
- * syslog-ng (or perhaps others) can send logs to riemann which can write to 
+ * syslog on each host (or each application directly) sends logs to a central 
+   syslog-ng which sends to logstash (and can also archive the log files, 
+   compressed on disk). Can't deal with log files, only syslog entries, though. 
+   Might be OK.
+ * syslog-ng (or perhaps others) can send logs to Riemann which can write to 
    elasticsearch. This seems an unusual approach though. Riemann seems more 
    designed to input the events that would otherwise generate a line in a log 
    file.
 
-We probably then want to aggressively remove log files from disk on the hosts. 
+At the moment I'm leaning towards configuring each hosts' syslog to forward all 
+logs to a central syslog-ng, have all applications send their logs to the local 
+syslog rather than files, and then have syslog-ng archive the logs and send 
+them to a single logstash instance. This way we get archived logs in a central 
+location for "traditional" usage (zgrep...) and still have all the logs in 
+ElasticSearch and Kibana. The only downside is that everything has to send 
+messages to syslog and we basically can't deal with logfiles generated locally.
 
 ### Metrics Choices
 
@@ -301,8 +314,16 @@ We probably then want to aggressively remove log files from disk on the hosts.
    it's not clear how this would interact with monitoring that hosts are 
    actually running). It's not clear if Heka and Riemann can usefully coexist.
 
+   Optionally we could _not_ run it on every host and just have a central Heka 
+   server that everything sends messages to. This could probably work as well.
+
 Alerting on application or service downtime is doable in Riemann and probably 
 in Heka based on the absence of heartbeat or other regular metrics.
+
+I like the idea and the concept of Riemann but I'm not sure how much its 
+downsides will hurt us in practice. Heka is a nice project too but might not 
+provide as much alerting as we really want. It might be best to play with both 
+of them for a little while first.
 
 ## Appendix: Interesting Links
 
