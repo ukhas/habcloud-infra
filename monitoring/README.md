@@ -325,6 +325,51 @@ downsides will hurt us in practice. Heka is a nice project too but might not
 provide as much alerting as we really want. It might be best to play with both 
 of them for a little while first.
 
+## Architecture
+
+On the `monitoring` VM:
+
+ * Errors
+   * PostgreSQL
+   * Redis
+   * nginx
+   * Sentry
+
+ * Logs
+   * syslog-ng
+   * logstash
+   * elasticsearch
+   * kibana
+   * nginx
+
+ * Analytics
+   * nginx
+   * php
+   * mysql
+   * piwik
+
+ * Metrics & Alerting
+   * riemann
+   * java
+   * influxdb
+   * grafana
+   * elasticsearch
+   * nginx
+
+On every VM:
+
+ * Errors
+   * raven (sentry python client)
+   * other sentry clients
+ * Logs
+   * syslog (comes with the servers anyway)
+   * applications and services logging to syslog
+ * Analytics
+   * Javascript on every page we want to monitor
+ * Metrics & Alerting
+   * applications send metrics directly to riemann
+   * diamond sends system stats to riemann
+
 ## Appendix: Interesting Links
 
 Scripts to install a lot of tools on Debian/Ubuntu:
