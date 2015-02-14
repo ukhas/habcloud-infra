@@ -13,7 +13,7 @@ habhub:
 monitoring:
   disk: {amt: 12, unit: G}
   host: phorcys
-  ip: [private, 4]
+  ip: [public, 118]
   ram: {amt: 2, unit: GiB}
   vcpus: 4
 predictor:
