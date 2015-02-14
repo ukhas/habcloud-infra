@@ -72,9 +72,10 @@
 ## Let VM public initiate connections to hosts on the internet
 -A FORWARD ! -d 2a02:710:1000:700:5054::1/72 -m state --state NEW -j ACCEPT
 
-## Allow HTTP to public VMs (from the world & other public VMs)
+## Allow HTTP(S) to public VMs (from the world & other public VMs)
 ### (Also allows new HTTP conns to hosts on the internet; irrelevant)
 -A FORWARD -o br0 -p tcp --dport 80 -m state --state NEW -j ACCEPT
+-A FORWARD -o br0 -p tcp --dport 443 -m state --state NEW -j ACCEPT
 
 
 # Nicer than a DROP
