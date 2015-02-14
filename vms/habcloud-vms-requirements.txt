@@ -1,0 +1,15 @@
+# Crucial
+PyYAML
+
+# For domain XML, sync dnsmasq, ...
+jinja2
+
+# For AWS
+boto
+
+# For Linode DNS. Unfortunately 1.1 doesn't appear to be on PyPI yet
+git+https://github.com/tjfontaine/linode-python@9ee60e8
+requests
+
+# For hypervisors
+# libvirt   typically installed via APT
