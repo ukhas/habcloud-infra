@@ -22,6 +22,12 @@ predictor:
   ip: [public, 117]
   ram: {amt: 8, unit: GiB}
   vcpus: 4
+predictor-hackathon:
+  disk: {amt: 20, unit: G}
+  host: ceto
+  ip: [public, 118]
+  ram: {amt: 8, unit: GiB}
+  vcpus: 1
 salt:
   disk: {amt: 5, unit: G}
   host: ceto
