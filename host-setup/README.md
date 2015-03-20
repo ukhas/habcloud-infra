@@ -28,6 +28,8 @@ Post install tasks
   - `apt-get install qemu-kvm libvirt-bin qemu-system bridge-utils ifenslave dnsmasq python-libvirt`
   - `apt-get install virtinst libguestfs-tools --no-install-recommends`
     you Do want to setup a supermin applaince.
+  - `apt-get purge nfs-common rpcbind`
+  - `apt-get autoremove --purge`
   - add yourself to group libvirt
   - install all files in `etc`
   - reconfigure `/etc/network/interfaces` and `/etc/dnsmasq.conf` with the correct IPs and IP ranges
