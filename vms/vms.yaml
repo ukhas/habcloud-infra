@@ -46,3 +46,9 @@ support:
   ip: [public, 116]
   ram: {amt: 1, unit: GiB}
   vcpus: 2
+ukhas:
+  disk: {amt: 8, unit: G}
+  host: phorcys
+  ip: [public, 120]
+  ram: {amt: 2, unit: GiB}
+  vcpus: 4
