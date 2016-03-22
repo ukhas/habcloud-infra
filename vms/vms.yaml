@@ -52,3 +52,9 @@ ukhas:
   ip: [public, 120]
   ram: {amt: 2, unit: GiB}
   vcpus: 4
+ukhasnet-influxdb:
+  disk: {amt: 8, unit: G}
+  host: phorcys
+  ip: [private, 4]
+  ram: {amt: 2, unit: GiB}
+  vcpus: 2
