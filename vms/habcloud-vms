@@ -363,7 +363,7 @@ def sync_linode(records):
 
     linode = Api(key)
 
-    for d in linode.domain_list():
+    for d in linode.domain.list():
         if d["DOMAIN"] == "vm.habhub.org":
             vm_habhub_org = d["DOMAINID"]
             break
@@ -371,7 +371,7 @@ def sync_linode(records):
         raise ValueError("couldn't find vm.habhub.org")
 
     def radd(type, name, target):
-        linode.domain_resource_create(
+        linode.domain.resource.create(
             DomainID=vm_habhub_org,
             Type=type,
             Name=name,
@@ -379,13 +379,13 @@ def sync_linode(records):
         )
 
     def rdelete(res):
-        linode.domain_resource_delete(
+        linode.domain.resource.delete(
             DomainID=vm_habhub_org,
             ResourceID=res["RESOURCEID"]
         )
 
     def rlist():
-        return linode.domain_resource_list(domainid=vm_habhub_org)
+        return linode.domain.resource.list(domainid=vm_habhub_org)
 
     def tuple_of_res(r):
         return (res["TYPE"].upper(), res["NAME"], res["TARGET"])
