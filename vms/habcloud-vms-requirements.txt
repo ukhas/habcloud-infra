@@ -7,8 +7,7 @@ jinja2
 # For AWS
 boto
 
-# For Linode DNS.
-linode-python[requests]
+# For DNS
 
 # For hypervisors
 # libvirt   typically installed via APT

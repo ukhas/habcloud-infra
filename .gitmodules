@@ -1,0 +1,3 @@
+[submodule "vms/.namecheap-api"]
+	path = vms/.namecheap-api
+	url = https://github.com/danielrichman/namecheap-api

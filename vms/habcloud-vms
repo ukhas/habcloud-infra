@@ -51,12 +51,12 @@ HOST_NETWORKS = {
 HOST_CPUS = {"ceto": 4, "phorcys": 8}
 HOST_IPS = {
     "ceto": {
-        "public": ["164.39.7.113", "2a02:710:1000:700::71"],
-        "pubpriv": ["10.0.1.113"]
+        "public": {"ip": "164.39.7.113", "ip6": "2a02:710:1000:700::71"},
+        "pubpriv": {"ip": "10.0.1.113"}
     },
     "phorcys": {
-        "public": ["164.39.7.114", "2a02:710:1000:700::72"],
-        "pubpriv": ["10.0.2.114"]
+        "public": {"ip": "164.39.7.114", "ip6": "2a02:710:1000:700::72"},
+        "pubpriv": {"ip": "10.0.2.114"}
     }
 }
 VM_BASE_SIZE = {"amt": 2, "unit": "G"}
@@ -180,7 +180,7 @@ def dnsmasq_hosts(db):
             else:
                 assert False
 
-            for addr in addresses:
+            for addr in addresses.values():
                 for s in suffixes:
                     add(addr, name + s)
 
@@ -338,74 +338,79 @@ def public_records(db):
     dkim_public = "".join(dkim_public[1:-1])
 
     spf_record = "v=spf1 a:support.vm.habhub.org -all"
+    spf_with_gmail_record = "v=spf1 a:support.vm.habhub.org include:aspmx.googlemail.com -all"
     dkim_record = "v=DKIM1; p={}; t=s".format(dkim_public)
 
     for name, cfg in db.items():
         cfg = expand_config(name, cfg)
 
-        yield "TXT", cfg["vm_name"], spf_record
-        yield "TXT", "support._domainkey." + cfg["vm_name"], dkim_record
+        yield "TXT", cfg["vm_name"] + ".vm", spf_record
+        yield "TXT", "support._domainkey." + cfg["vm_name"] + ".vm", dkim_record
 
         for intf in cfg["interfaces"]:
             if intf["ip_type"] == "public":
-                yield "A",    cfg["vm_name"], intf["ip"]
-                yield "AAAA", cfg["vm_name"], intf["ip6"]
+                yield "A",    cfg["vm_name"] + ".vm", intf["ip"]
+                yield "AAAA", cfg["vm_name"] + ".vm", intf["ip6"]
 
 
-def sync_linode(records):
-    # lazy import linode api so that we can run other things
-    from linode.api import Api
+    for name in ["ceto", "phorcys", "kraken", "tiamat"]:
+        yield "TXT", name, spf_record
+        yield "TXT", "support._domainkey." + name, dkim_record
 
-    try:
-        key = raw_input("api key> ")
-    except NameError:
-        key = input("api key> ")
+    yield "TXT", "@", spf_with_gmail_record
+    yield "TXT", "support._domainkey", dkim_record
 
-    linode = Api(key)
+    for name, networks in HOST_IPS.items():
+        addresses = networks["public"]
+        yield "A", name, addresses["ip"]
+        yield "AAAA", name, addresses["ip6"]
 
-    for d in linode.domain.list():
-        if d["DOMAIN"] == "vm.habhub.org":
-            vm_habhub_org = d["DOMAINID"]
+    habhub_vm = expand_config("habhub", db["habhub"])
+    for intf in habhub_vm["interfaces"]:
+        if intf["ip_type"] == "public":
+            habhub_public = intf
             break
     else:
-        raise ValueError("couldn't find vm.habhub.org")
+        raise Exception("Failed to find habhub vm public intf")
 
-    def radd(type, name, target):
-        linode.domain.resource.create(
-            DomainID=vm_habhub_org,
-            Type=type,
-            Name=name,
-            Target=target
-        )
+    yield "A", "@", habhub_public["ip"]
+    yield "AAAA", "@", habhub_public["ip6"]
+    yield "CNAME", "www", "habhub.vm.habhub.org."
 
-    def rdelete(res):
-        linode.domain.resource.delete(
-            DomainID=vm_habhub_org,
-            ResourceID=res["RESOURCEID"]
-        )
+    yield "A", "salt", "127.0.100.100"
+    yield "A", "salt.vm", "127.0.100.101"
 
-    def rlist():
-        return linode.domain.resource.list(domainid=vm_habhub_org)
+    yield "CNAME", "habitat",      "kraken.habhub.org."
+    yield "CNAME", "beta.habitat", "kraken.habhub.org."
 
-    def tuple_of_res(r):
-        return (res["TYPE"].upper(), res["NAME"], res["TARGET"])
+    yield "CNAME", "ci",           "kraken.habhub.org."
+    yield "CNAME", "mail",         "ghs.google.com."
+    yield "CNAME", "webmail",      "ghs.google.com."
 
-    rstr = public_record_to_string
+    yield "CNAME", "predict",      "tiamat.habhub.org."
+    yield "CNAME", "ssdv",         "tiamat.habhub.org."
+    yield "CNAME", "stats",        "kraken.habhub.org."
 
-    desired = set(records)
+    yield "CNAME", "tracker",      "tiamat.habhub.org."
+    yield "CNAME", "beta.tracker", "tiamat.habhub.org."
 
-    for res in rlist():
-        tup = tuple_of_res(res)
-        if tup not in desired:
-            print("Removing", rstr(*tup))
-            rdelete(res)
-        else:
-            print("OK      ", rstr(*tup))
-            desired.remove(tup)
+    for letter in "abc":
+        yield "CNAME", letter + ".tiles.tacker", "kraken.habhub.org."
 
-    for tup in desired:
-        print("Add     ", rstr(*tup))
-        radd(*tup)
+    yield "CNAME", "kibana",       "monitoring.vm.habhub.org."
+    yield "CNAME", "sentry",       "monitoring.vm.habhub.org."
+    yield "CNAME", "saltbot",      "habhub.vm.habhub.org."
+
+    yield "CNAME", "test-one",     "scratch.vm.habhub.org."
+    yield "CNAME", "test-two",     "scratch.vm.habhub.org."
+
+
+def sync_namecheap(records):
+    records = [namecheap_api.Record(host=host, data=data, record_type=record_type)
+               for record_type, host, data in records]
+    ncauth = namecheap_api.get_ncauth_from_user()
+    conn = namecheap_api.connect()
+    namecheap_api.sync(conn=conn, domain="habhub.org", ncauth=ncauth, records)
 
 
 def s3_connect():
@@ -596,9 +601,9 @@ def cmd_public_records(args):
         print(public_record_to_string(*r))
 
 
-def cmd_sync_linode(args):
+def cmd_sync_namecheap(args):
     db = read_db(args.db)
-    sync_linode(public_records(db))
+    sync_namecheap(public_records(db))
 
 
 def cmd_create_all(args):
@@ -735,9 +740,9 @@ def main():
         "public-records", help='print public DNS records')
     public_records.set_defaults(func=cmd_public_records)
 
-    sync_linode = subparsers.add_parser(
-        "sync-linode", help='sync linode public DNS')
-    sync_linode.set_defaults(func=cmd_sync_linode)
+    sync_namecheap = subparsers.add_parser(
+        "sync-namecheap", help='sync namecheap public DNS')
+    sync_namecheap.set_defaults(func=cmd_sync_namecheap)
 
     create_all = subparsers.add_parser("create-all",
                                        help="create VMs that should exist")
