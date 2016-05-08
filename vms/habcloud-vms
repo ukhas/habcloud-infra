@@ -29,6 +29,9 @@ try:
 except ImportError:
     BOTO = False
 
+import namecheap_api
+
+
 LIBVIRT_URI = "qemu:///system"
 AVAILABLE = {
     'public': set(range(115, 124 + 1)),
@@ -313,13 +316,13 @@ def sync_dnsmasq(db):
     os.kill(pid, signal.SIGHUP)
 
 
-# records are (type : TXT | A | AAAA, name : string, target : string)
+# records are (type : TXT | A | AAAA | CNAME, name : string, target : string)
 
 def public_record_to_string(type, name, target):
     limit = 40
     if len(target) > limit:
         target = target[:limit] + "..."
-    return "{:4} {:30} {}".format(type, name, target)
+    return "{:5} {:50} {}".format(type, name, target)
 
 
 def public_records(db):
@@ -352,6 +355,7 @@ def public_records(db):
                 yield "A",    cfg["vm_name"] + ".vm", intf["ip"]
                 yield "AAAA", cfg["vm_name"] + ".vm", intf["ip6"]
 
+    # This needs some cleanup
 
     for name in ["ceto", "phorcys", "kraken", "tiamat"]:
         yield "TXT", name, spf_record
@@ -410,7 +414,18 @@ def sync_namecheap(records):
                for record_type, host, data in records]
     ncauth = namecheap_api.get_ncauth_from_user()
     conn = namecheap_api.connect()
-    namecheap_api.sync(conn=conn, domain="habhub.org", ncauth=ncauth, records)
+    namecheap_api.sync(conn=conn, domain="habhub.org", ncauth=ncauth, records=records)
+
+
+# The point is that you can run this script somewhere you trust with the cookie
+def make_sync_namecheap_script(records):
+    records = [namecheap_api.Record(host=host, data=data, record_type=record_type)
+               for record_type, host, data in records]
+    print("from namecheap_api import get_ncauth_from_user, connect, sync, Record")
+    print("records = {!r}".format(records))
+    print("ncauth = get_ncauth_from_user()")
+    print("conn = connect()")
+    print("sync(conn=conn, domain='habhub.org', ncauth=ncauth, records=records)")
 
 
 def s3_connect():
@@ -606,6 +621,12 @@ def cmd_sync_namecheap(args):
     sync_namecheap(public_records(db))
 
 
+def cmd_make_sync_namecheap_script(args):
+    db = read_db(args.db)
+    make_sync_namecheap_script(public_records(db))
+
+
+
 def cmd_create_all(args):
     import libvirt
     db = read_db(args.db)
@@ -743,6 +764,11 @@ def main():
     sync_namecheap = subparsers.add_parser(
         "sync-namecheap", help='sync namecheap public DNS')
     sync_namecheap.set_defaults(func=cmd_sync_namecheap)
+
+    make_sync_namecheap_script = subparsers.add_parser(
+        "make-sync-namecheap-script", 
+        help='make a script that will sync namecheap public DNS')
+    make_sync_namecheap_script.set_defaults(func=cmd_make_sync_namecheap_script)
 
     create_all = subparsers.add_parser("create-all",
                                        help="create VMs that should exist")
