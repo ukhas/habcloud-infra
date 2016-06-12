@@ -399,7 +399,7 @@ def public_records(db):
     yield "CNAME", "beta.tracker", "tiamat.habhub.org."
 
     for letter in "abc":
-        yield "CNAME", letter + ".tiles.tacker", "kraken.habhub.org."
+        yield "CNAME", letter + ".tiles.tracker", "kraken.habhub.org."
 
     yield "CNAME", "kibana",       "monitoring.vm.habhub.org."
     yield "CNAME", "sentry",       "monitoring.vm.habhub.org."
