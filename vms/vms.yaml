@@ -40,6 +40,12 @@ scratch:
   ip: [public, 124]
   ram: {amt: 1, unit: GiB}
   vcpus: 2
+ssdv:
+  disk: {amt: 4, unit: G}
+  host: phorcys
+  ip: [private, 4]
+  ram: {amt: 3, unit: GiB}
+  vcpus: 4
 support:
   disk: {amt: 5, unit: G}
   host: ceto
