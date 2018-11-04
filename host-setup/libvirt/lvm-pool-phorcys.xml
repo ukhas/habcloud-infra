@@ -1,6 +1,0 @@
-<pool type="logical">
-    <name>phorcys</name>
-    <target>
-        <path>/dev/phorcys</path>
-    </target>
-</pool>

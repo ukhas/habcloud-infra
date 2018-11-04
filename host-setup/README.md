@@ -1,49 +1,28 @@
-# Debian install
+# Setup
 
-Debian installer booted 
+You'll need 
+  - [the simple-kvm host-di-preseed](https://github.com/danielrichman/simple-kvm/tree/master/host-di-preseed)
   - [with bnx2 firmware embedded](https://github.com/danielrichman/preseed)
-  - with command line `append install vga=normal initrd=initrd.gz fb=false console=tty0 console=ttyS1,9600n8`
+  - and probably a command line something like `append install vga=normal initrd=initrd.gz fb=false console=tty0 console=ttyS1,9600n8`
 
-
-iLO commands:
+iLO commands, something like:
   - `ilo-> vm cdrom insert http://www.danielrichman.co.uk/files/bnx2-deb7.iso`
-    (sha256sum 77d8ad8c5bbf09a71c1d855b57460953ee5186b7d027403d3ea8735ac2bb3f2e)
   - `ilo-> vm cdrom set boot_once`
   - `ilo-> power on`
 
-Disk config: Raid 10, stripe across 3 mirror pairs + 2 hot spares (set before boot)
-
-Debian installer
-  - Static configure networking.
-  - Single LVM partition on raid disks.
-  - Volume group name: ceto/phorcys
-  - 8192M partition “host-root” ext4 /
-  - Temporary username `habcloud`
+Installer notes
+  - disk config: Raid 10, stripe across 3 mirror pairs + 2 hot spares (needs to be done in hw raid controller config)
+  - static networking
+  - volume group vg0
+  - root partition e.g. `physical4-root` 8G
 
 Post install tasks
-  - configure passwordless sudo
   - acquire and install [hpacucli](http://downloads.linux.hp.com/SDR/repo/mcp/pool/non-free/hpacucli_9.40.1-1._amd64.deb)
-  - `apt-get install rsync vim git iperf`
-  - `apt-get install python-jinja2 python-yaml`
-  - `apt-get install qemu-kvm libvirt-bin qemu-system bridge-utils ifenslave dnsmasq python-libvirt`
-  - `apt-get install virtinst libguestfs-tools --no-install-recommends`
-    you Do want to setup a supermin applaince.
-  - `apt-get purge nfs-common rpcbind`
-  - `apt-get autoremove --purge`
-  - add yourself to group libvirt
-  - install all files in `etc`
-  - reconfigure `/etc/network/interfaces` and `/etc/dnsmasq.conf` with the correct IPs and IP ranges
-    you may need to use `mii-tool` to inspect ports
-  - `sudo virsh net-undefine default`
-  - reboot and check all networking comes up.
-  - `sudo virsh net-create libvirt/br0.xml`
-  - `sudo virsh net-create libvirt/br1.xml`
-  - `sudo virsh pool-create libvirt/lvm-pool-$HOSTNAME.xml`
+  - setup iptables using the files in `etc`
 
 After [bootstrapping salt](../salt-config/bootstrapping.md)
-  * Copy host-setup/etc/salt to /etc/salt
+  - Copy host-setup/etc/salt to /etc/salt
   - Add the salt Debian repo, install salt-minion, accept the key, and let it configure the rest of the master.
-  - Delete the temporary user with prejudice.
 
 # IP Address allcation
 
@@ -51,10 +30,13 @@ After [bootstrapping salt](../salt-config/bootstrapping.md)
 
   - ceto: `164.39.7.113`
   - phorcys: `164.39.7.114`
-  - guests: `164.39.7.115--124`
+  - physical4: `164.39.7.123`
+  - guests: `164.39.7.115--122`
   - no specific alocation convention
 
 ## Private IPv4
+
+TODO: update for new physical4 style
 
 Each VM host has three ranges:
 
