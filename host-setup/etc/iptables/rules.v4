@@ -21,6 +21,12 @@ COMMIT
 -A INPUT -i eth2 -j DROP
 -A INPUT -i eth3 -j DROP
 
+## The private 10.0.0.0/8 network must not leak over eth0
+-A INPUT  -i eth0 -s 10.0.0.0/8 -j DROP
+-A INPUT  -i eth0 -d 10.0.0.0/8 -j DROP
+-A OUTPUT -o eth0 -s 10.0.0.0/8 -j DROP
+-A OUTPUT -o eth0 -s 10.0.0.0/8 -j DROP
+
 ## Ban salt in/out of the outside world completely.
 -A OUTPUT  -o eth0 -p tcp --dport 4505:4506 -j REJECT
 -A FORWARD -o eth0 -p tcp --dport 4505:4506 -j REJECT
