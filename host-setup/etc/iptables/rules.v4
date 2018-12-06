@@ -41,7 +41,7 @@ COMMIT
 -A log-and-reject-smtp -j REJECT
 
 -A OUTPUT  -o eth0 -p tcp --dport 25 -j log-and-reject-smtp
--A FORWARD -o eth0 -p tcp --dport 25 ! -s 164.39.7.116 -j log-and-reject-smtp
+-A FORWARD -o eth0 -p tcp --dport 25 ! -i tap-support -j log-and-reject-smtp
 
 ## Localhost stuff
 -A INPUT -i lo -j ACCEPT
